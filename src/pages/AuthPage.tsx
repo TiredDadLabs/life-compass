@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { Sunrise, Mail, Lock, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -15,12 +16,64 @@ const authSchema = z.object({
 });
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Listen for password recovery event
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('reset');
+      }
+    });
+
+    // Check if we're coming back from a reset link
+    if (searchParams.get('reset') === 'true') {
+      // Check if user has a recovery session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setMode('reset');
+        }
+      });
+    }
+
+    return () => subscription.unsubscribe();
+  }, [searchParams]);
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    const passwordValidation = z.string().min(6, 'Password must be at least 6 characters').safeParse(password);
+    if (!passwordValidation.success) {
+      toast.error(passwordValidation.error.errors[0].message);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success('Password updated successfully!');
+        navigate('/');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +86,6 @@ export default function AuthPage() {
 
     setIsLoading(true);
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth?reset=true`,
       });
@@ -111,18 +163,65 @@ export default function AuthPage() {
         <Card className="border-0 shadow-elegant">
           <CardHeader className="text-center pb-4">
             <CardTitle className="font-display text-xl">
-              {mode === 'forgot' ? 'Reset password' : mode === 'login' ? 'Welcome back' : 'Start your journey'}
+              {mode === 'reset' ? 'Set new password' : mode === 'forgot' ? 'Reset password' : mode === 'login' ? 'Welcome back' : 'Start your journey'}
             </CardTitle>
             <CardDescription>
-              {mode === 'forgot' 
-                ? "Enter your email and we'll send you a reset link"
-                : mode === 'login' 
-                  ? 'Sign in to continue to your dashboard' 
-                  : 'Create an account to begin prioritizing what matters'}
+              {mode === 'reset'
+                ? 'Enter your new password below'
+                : mode === 'forgot' 
+                  ? "Enter your email and we'll send you a reset link"
+                  : mode === 'login' 
+                    ? 'Sign in to continue to your dashboard' 
+                    : 'Create an account to begin prioritizing what matters'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {mode === 'forgot' ? (
+            {mode === 'reset' ? (
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">New Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  variant="horizon" 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Please wait...' : 'Update password'}
+                </Button>
+              </form>
+            ) : mode === 'forgot' ? (
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -214,7 +313,11 @@ export default function AuthPage() {
             )}
 
             <div className="mt-6 text-center space-y-2">
-              {mode === 'forgot' ? (
+              {mode === 'reset' ? (
+                <p className="text-sm text-muted-foreground">
+                  Set your new password above
+                </p>
+              ) : mode === 'forgot' ? (
                 <button
                   type="button"
                   onClick={() => setMode('login')}
