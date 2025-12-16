@@ -6,6 +6,7 @@ import { Heart, Users, Dumbbell, Briefcase, Sparkles, Plus, TrendingUp, Check, C
 import { cn } from '@/lib/utils';
 import { WeekOverWeekTracker } from '@/components/WeekOverWeekTracker';
 import { useToast } from '@/hooks/use-toast';
+import { GoalFormDialog } from '@/components/GoalFormDialog';
 
 type GoalCategory = 'relationship' | 'kids' | 'health' | 'work' | 'self';
 
@@ -117,7 +118,7 @@ function GoalDetailCard({ goal, index, onLogProgress, getCurrentRampedTarget }: 
 }
 
 export default function GoalsPage() {
-  const { goals, logGoalActivity, getCurrentRampedTarget } = useHorizonData();
+  const { goals, logGoalActivity, getCurrentRampedTarget, addGoal } = useHorizonData();
   const { toast } = useToast();
 
   const handleLogProgress = async (goalId: string) => {
@@ -126,6 +127,16 @@ export default function GoalsPage() {
       toast({ title: 'Progress logged!', description: 'Keep up the great work!' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to log progress.', variant: 'destructive' });
+    }
+  };
+
+  const handleAddGoal = async (goalData: Parameters<typeof addGoal>[0]) => {
+    try {
+      await addGoal(goalData);
+      toast({ title: 'Goal created!', description: 'Start tracking your progress.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to create goal.', variant: 'destructive' });
+      throw error;
     }
   };
 
@@ -156,10 +167,15 @@ export default function GoalsPage() {
               What matters to you this week
             </p>
           </div>
-          <Button variant="horizon" size="sm">
-            <Plus className="w-4 h-4" />
-            New Goal
-          </Button>
+          <GoalFormDialog
+            trigger={
+              <Button variant="horizon" size="sm">
+                <Plus className="w-4 h-4" />
+                New Goal
+              </Button>
+            }
+            onSubmit={handleAddGoal}
+          />
         </div>
 
         {/* Progress summary */}
@@ -236,10 +252,15 @@ export default function GoalsPage() {
             <p className="text-muted-foreground mb-4">
               Set weekly goals to track what matters most to you.
             </p>
-            <Button variant="horizon">
-              <Plus className="w-4 h-4" />
-              Create Your First Goal
-            </Button>
+            <GoalFormDialog
+              trigger={
+                <Button variant="horizon">
+                  <Plus className="w-4 h-4" />
+                  Create Your First Goal
+                </Button>
+              }
+              onSubmit={handleAddGoal}
+            />
           </Card>
         )}
       </main>
