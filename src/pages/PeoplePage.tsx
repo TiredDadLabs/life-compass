@@ -3,10 +3,11 @@ import { useHorizonData, DbPerson } from '@/hooks/useHorizonData';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, UserCircle, Plus, Sparkles, Edit, Calendar, Cake } from 'lucide-react';
+import { Heart, Users, UserCircle, Plus, Sparkles, Edit, Calendar, Cake, Gift } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PersonFormDialog } from '@/components/PersonFormDialog';
 import { ActivityIdeas } from '@/components/ActivityIdeas';
+import { GiftIdeas } from '@/components/GiftIdeas';
 import { UpcomingDates } from '@/components/UpcomingDates';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, differenceInDays, isBefore, addYears } from 'date-fns';
@@ -50,6 +51,7 @@ interface PersonCardProps {
 
 function PersonCard({ person, index, userCity, personDates, onEdit }: PersonCardProps) {
   const [showIdeas, setShowIdeas] = useState(false);
+  const [showGifts, setShowGifts] = useState(false);
   const config = relationshipConfig[person.relationship as RelationshipType] || relationshipConfig.other;
   const Icon = config.icon;
 
@@ -135,12 +137,27 @@ function PersonCard({ person, index, userCity, personDates, onEdit }: PersonCard
           variant="ghost"
           size="sm"
           className="flex-1"
-          onClick={() => setShowIdeas(!showIdeas)}
+          onClick={() => { setShowGifts(!showGifts); setShowIdeas(false); }}
+        >
+          <Gift className="w-4 h-4" />
+          Gifts
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1"
+          onClick={() => { setShowIdeas(!showIdeas); setShowGifts(false); }}
         >
           <Sparkles className="w-4 h-4" />
-          {person.relationship === 'partner' ? 'Date Ideas' : 'Activities'}
+          {person.relationship === 'partner' ? 'Dates' : 'Activities'}
         </Button>
       </div>
+
+      {showGifts && (
+        <div className="mt-4">
+          <GiftIdeas person={person} />
+        </div>
+      )}
 
       {showIdeas && (
         <div className="mt-4">
