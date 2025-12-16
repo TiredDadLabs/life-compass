@@ -14,7 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      goal_logs: {
+        Row: {
+          duration_minutes: number | null
+          goal_id: string
+          id: string
+          logged_at: string | null
+          notes: string | null
+          people_involved: string[] | null
+          user_id: string
+        }
+        Insert: {
+          duration_minutes?: number | null
+          goal_id: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          people_involved?: string[] | null
+          user_id: string
+        }
+        Update: {
+          duration_minutes?: number | null
+          goal_id?: string
+          id?: string
+          logged_at?: string | null
+          notes?: string | null
+          people_involved?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_logs_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goals: {
+        Row: {
+          category: string
+          created_at: string | null
+          current_progress: number | null
+          icon: string | null
+          id: string
+          name: string
+          ramp_current_week: number | null
+          ramp_duration_weeks: number | null
+          ramp_enabled: boolean | null
+          ramp_start: number | null
+          target_per_week: number
+          unit: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          current_progress?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          ramp_current_week?: number | null
+          ramp_duration_weeks?: number | null
+          ramp_enabled?: boolean | null
+          ramp_start?: number | null
+          target_per_week?: number
+          unit?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          current_progress?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          ramp_current_week?: number | null
+          ramp_duration_weeks?: number | null
+          ramp_enabled?: boolean | null
+          ramp_start?: number | null
+          target_per_week?: number
+          unit?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      important_dates: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          is_recurring: boolean | null
+          person_id: string | null
+          reminder_days_before: number | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          is_recurring?: boolean | null
+          person_id?: string | null
+          reminder_days_before?: number | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          is_recurring?: boolean | null
+          person_id?: string | null
+          reminder_days_before?: number | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "important_dates_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      people: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          interests: string[] | null
+          last_quality_time: string | null
+          location: string | null
+          name: string
+          notes: string | null
+          relationship: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          interests?: string[] | null
+          last_quality_time?: string | null
+          location?: string | null
+          name: string
+          notes?: string | null
+          relationship: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          interests?: string[] | null
+          last_quality_time?: string | null
+          location?: string | null
+          name?: string
+          notes?: string | null
+          relationship?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          onboarding_completed: boolean | null
+          priority_areas: string[] | null
+          timezone: string | null
+          updated_at: string | null
+          work_end_hour: number | null
+          work_start_hour: number | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          onboarding_completed?: boolean | null
+          priority_areas?: string[] | null
+          timezone?: string | null
+          updated_at?: string | null
+          work_end_hour?: number | null
+          work_start_hour?: number | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          onboarding_completed?: boolean | null
+          priority_areas?: string[] | null
+          timezone?: string | null
+          updated_at?: string | null
+          work_end_hour?: number | null
+          work_start_hour?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
