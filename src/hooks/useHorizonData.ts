@@ -1,0 +1,253 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+
+export interface DbGoal {
+  id: string;
+  user_id: string;
+  name: string;
+  category: string;
+  target_per_week: number;
+  current_progress: number;
+  unit: string;
+  ramp_enabled: boolean;
+  ramp_start: number | null;
+  ramp_duration_weeks: number | null;
+  ramp_current_week: number | null;
+  icon: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbPerson {
+  id: string;
+  user_id: string;
+  name: string;
+  relationship: string;
+  interests: string[] | null;
+  notes: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  last_quality_time: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbImportantDate {
+  id: string;
+  user_id: string;
+  person_id: string | null;
+  title: string;
+  date: string;
+  type: string;
+  is_recurring: boolean;
+  reminder_days_before: number | null;
+  created_at: string;
+  person_name?: string;
+}
+
+export interface DbProfile {
+  id: string;
+  name: string | null;
+  email: string | null;
+  city: string | null;
+  timezone: string | null;
+  work_start_hour: number | null;
+  work_end_hour: number | null;
+  priority_areas: string[] | null;
+  onboarding_completed: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useHorizonData() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<DbProfile | null>(null);
+  const [goals, setGoals] = useState<DbGoal[]>([]);
+  const [people, setPeople] = useState<DbPerson[]>([]);
+  const [importantDates, setImportantDates] = useState<DbImportantDate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchProfile = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error fetching profile:', error);
+    } else {
+      setProfile(data);
+    }
+  }, [user]);
+
+  const fetchGoals = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('goals')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching goals:', error);
+    } else {
+      setGoals(data || []);
+    }
+  }, [user]);
+
+  const fetchPeople = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('people')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching people:', error);
+    } else {
+      setPeople(data || []);
+    }
+  }, [user]);
+
+  const fetchImportantDates = useCallback(async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('important_dates')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: true });
+    
+    if (error) {
+      console.error('Error fetching important dates:', error);
+    } else {
+      // Enrich with person names
+      const enriched = (data || []).map(d => {
+        const person = people.find(p => p.id === d.person_id);
+        return { ...d, person_name: person?.name };
+      });
+      setImportantDates(enriched);
+    }
+  }, [user, people]);
+
+  const fetchAll = useCallback(async () => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
+    await Promise.all([
+      fetchProfile(),
+      fetchGoals(),
+      fetchPeople(),
+    ]);
+    setIsLoading(false);
+  }, [user, fetchProfile, fetchGoals, fetchPeople]);
+
+  // Fetch important dates after people are loaded
+  useEffect(() => {
+    if (people.length >= 0 && user) {
+      fetchImportantDates();
+    }
+  }, [people, user, fetchImportantDates]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  const updateProfile = async (updates: Partial<DbProfile>) => {
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id);
+    
+    if (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+    
+    await fetchProfile();
+  };
+
+  const addGoal = async (goal: Omit<DbGoal, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'current_progress'>) => {
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from('goals')
+      .insert({ ...goal, user_id: user.id, current_progress: 0 });
+    
+    if (error) {
+      console.error('Error adding goal:', error);
+      throw error;
+    }
+    
+    await fetchGoals();
+  };
+
+  const updateGoalProgress = async (goalId: string, progress: number) => {
+    const { error } = await supabase
+      .from('goals')
+      .update({ current_progress: progress })
+      .eq('id', goalId);
+    
+    if (error) {
+      console.error('Error updating goal:', error);
+      throw error;
+    }
+    
+    await fetchGoals();
+  };
+
+  const addPerson = async (person: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) return;
+    
+    const { error } = await supabase
+      .from('people')
+      .insert({ ...person, user_id: user.id });
+    
+    if (error) {
+      console.error('Error adding person:', error);
+      throw error;
+    }
+    
+    await fetchPeople();
+  };
+
+  const getCurrentRampedTarget = (goal: DbGoal): number => {
+    if (!goal.ramp_enabled || !goal.ramp_start || !goal.ramp_duration_weeks || !goal.ramp_current_week) {
+      return goal.target_per_week;
+    }
+    
+    const increment = (goal.target_per_week - goal.ramp_start) / goal.ramp_duration_weeks;
+    const currentTarget = goal.ramp_start + (increment * goal.ramp_current_week);
+    return Math.round(currentTarget * 10) / 10;
+  };
+
+  return {
+    profile,
+    goals,
+    people,
+    importantDates,
+    isLoading,
+    fetchAll,
+    fetchProfile,
+    fetchGoals,
+    fetchPeople,
+    fetchImportantDates,
+    updateProfile,
+    addGoal,
+    updateGoalProgress,
+    addPerson,
+    getCurrentRampedTarget,
+  };
+}
