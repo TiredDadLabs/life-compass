@@ -2,12 +2,12 @@ import { useHorizonData, DbGoal } from '@/hooks/useHorizonData';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, Dumbbell, Briefcase, Sparkles, Plus, TrendingUp, Check, ChevronRight } from 'lucide-react';
+import { Heart, Users, Dumbbell, Briefcase, Sparkles, Plus, TrendingUp, Check, ChevronRight, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WeekOverWeekTracker } from '@/components/WeekOverWeekTracker';
 import { useToast } from '@/hooks/use-toast';
 import { GoalFormDialog } from '@/components/GoalFormDialog';
-
+import { LifestyleFormDialog } from '@/components/LifestyleFormDialog';
 type GoalCategory = 'relationship' | 'kids' | 'health' | 'work' | 'self';
 
 const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; color: string; bgColor: string }> = {
@@ -167,15 +167,26 @@ export default function GoalsPage() {
               What matters to you this week
             </p>
           </div>
-          <GoalFormDialog
-            trigger={
-              <Button variant="horizon" size="sm">
-                <Plus className="w-4 h-4" />
-                New Goal
-              </Button>
-            }
-            onSubmit={handleAddGoal}
-          />
+          <div className="flex gap-2">
+            <LifestyleFormDialog
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Layers className="w-4 h-4" />
+                  Lifestyle
+                </Button>
+              }
+              onSubmit={handleAddGoal}
+            />
+            <GoalFormDialog
+              trigger={
+                <Button variant="horizon" size="sm">
+                  <Plus className="w-4 h-4" />
+                  New Goal
+                </Button>
+              }
+              onSubmit={handleAddGoal}
+            />
+          </div>
         </div>
 
         {/* Progress summary */}
@@ -250,17 +261,28 @@ export default function GoalsPage() {
             <Sparkles className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="font-semibold text-foreground mb-2">No goals set yet</h3>
             <p className="text-muted-foreground mb-4">
-              Set weekly goals to track what matters most to you.
+              Create a lifestyle to set up multiple goals at once, or add individual goals.
             </p>
-            <GoalFormDialog
-              trigger={
-                <Button variant="horizon">
-                  <Plus className="w-4 h-4" />
-                  Create Your First Goal
-                </Button>
-              }
-              onSubmit={handleAddGoal}
-            />
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <LifestyleFormDialog
+                trigger={
+                  <Button variant="horizon">
+                    <Layers className="w-4 h-4" />
+                    Create a Lifestyle
+                  </Button>
+                }
+                onSubmit={handleAddGoal}
+              />
+              <GoalFormDialog
+                trigger={
+                  <Button variant="outline">
+                    <Plus className="w-4 h-4" />
+                    Add Single Goal
+                  </Button>
+                }
+                onSubmit={handleAddGoal}
+              />
+            </div>
           </Card>
         )}
       </main>
