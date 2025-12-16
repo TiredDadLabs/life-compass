@@ -208,22 +208,54 @@ export function useHorizonData() {
     await fetchGoals();
   };
 
-  const addPerson = async (person: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const addPerson = async (
+    person: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    dates?: { title: string; date: string; type: string }[]
+  ) => {
     if (!user) return;
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('people')
-      .insert({ ...person, user_id: user.id });
+      .insert({ ...person, user_id: user.id })
+      .select()
+      .single();
     
     if (error) {
       console.error('Error adding person:', error);
       throw error;
     }
     
+    // Add important dates if provided
+    if (dates && dates.length > 0 && data) {
+      const datesToInsert = dates.map(d => ({
+        user_id: user.id,
+        person_id: data.id,
+        title: d.title,
+        date: d.date,
+        type: d.type,
+        is_recurring: true,
+      }));
+      
+      const { error: datesError } = await supabase
+        .from('important_dates')
+        .insert(datesToInsert);
+      
+      if (datesError) {
+        console.error('Error adding dates:', datesError);
+      }
+    }
+    
     await fetchPeople();
+    await fetchImportantDates();
   };
 
-  const updatePerson = async (personId: string, updates: Partial<Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+  const updatePerson = async (
+    personId: string,
+    updates: Partial<Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>>,
+    dates?: { title: string; date: string; type: string }[]
+  ) => {
+    if (!user) return;
+    
     const { error } = await supabase
       .from('people')
       .update(updates)
@@ -234,7 +266,41 @@ export function useHorizonData() {
       throw error;
     }
     
+    // Update important dates if provided
+    if (dates !== undefined) {
+      // Delete existing dates for this person
+      await supabase
+        .from('important_dates')
+        .delete()
+        .eq('person_id', personId);
+      
+      // Insert new dates
+      if (dates.length > 0) {
+        const datesToInsert = dates.map(d => ({
+          user_id: user.id,
+          person_id: personId,
+          title: d.title,
+          date: d.date,
+          type: d.type,
+          is_recurring: true,
+        }));
+        
+        const { error: datesError } = await supabase
+          .from('important_dates')
+          .insert(datesToInsert);
+        
+        if (datesError) {
+          console.error('Error updating dates:', datesError);
+        }
+      }
+    }
+    
     await fetchPeople();
+    await fetchImportantDates();
+  };
+
+  const getPersonDates = (personId: string) => {
+    return importantDates.filter(d => d.person_id === personId);
   };
 
   const deletePerson = async (personId: string) => {
@@ -303,6 +369,7 @@ export function useHorizonData() {
     addPerson,
     updatePerson,
     deletePerson,
+    getPersonDates,
     logGoalActivity,
     getCurrentRampedTarget,
   };
