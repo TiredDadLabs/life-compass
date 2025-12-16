@@ -21,13 +21,14 @@ interface ImportantDate {
 }
 
 interface RequestBody {
-  type: 'gift_ideas' | 'date_ideas' | 'activity_ideas' | 'weekly_summary' | 'reminder' | 'celebration_ideas';
+  type: 'gift_ideas' | 'gift_suggestions' | 'date_ideas' | 'activity_ideas' | 'weekly_summary' | 'reminder' | 'celebration_ideas';
   person?: Person;
   importantDate?: ImportantDate;
   upcomingDates?: ImportantDate[];
   people?: Person[];
   userCity?: string;
   daysUntil?: number;
+  occasion?: string;
 }
 
 serve(async (req) => {
@@ -68,6 +69,31 @@ For each gift, provide:
 - Approximate price range ($, $$, or $$$)
 
 Focus on thoughtful, personal gifts that show you know this person.`;
+        break;
+
+      case 'gift_suggestions':
+        if (!person) {
+          throw new Error("Person required for gift_suggestions");
+        }
+        const occasion = body.occasion || 'a thoughtful gift';
+        userPrompt = `Generate 5 specific, purchasable gift ideas for ${person.name} (${person.relationship}).
+
+${person.interests?.length ? `Their interests include: ${person.interests.join(', ')}.` : ''}
+${person.notes ? `Additional context: ${person.notes}` : ''}
+Occasion: ${occasion}
+
+IMPORTANT: Suggest REAL, SPECIFIC products that can be found on major retailers like Amazon or Etsy.
+Be specific with product names (e.g., "Ember Temperature Control Smart Mug 2" not just "smart mug").
+
+For each gift, format as:
+**[Specific Product Name]** - [Price range: $, $$, or $$$]
+Brief description of why this gift is perfect for them based on their interests.
+
+Focus on:
+- Specific brand names and product models when possible
+- Items that match their interests directly
+- A mix of price ranges
+- Unique, thoughtful items (not generic gifts)`;
         break;
 
       case 'celebration_ideas':
