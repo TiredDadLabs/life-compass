@@ -1,4 +1,5 @@
 import { useHorizon } from '@/contexts/HorizonContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,7 @@ import {
   User, Bell, Calendar, Shield, CreditCard, HelpCircle, 
   LogOut, ChevronRight, Moon, Sun 
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
+import { toast } from 'sonner';
 interface SettingsItemProps {
   icon: typeof User;
   label: string;
@@ -38,7 +38,12 @@ function SettingsItem({ icon: Icon, label, description, onClick, trailing }: Set
 
 export default function SettingsPage() {
   const { user } = useHorizon();
+  const { signOut } = useAuth();
 
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out successfully');
+  };
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
@@ -123,6 +128,7 @@ export default function SettingsPage() {
             <SettingsItem
               icon={LogOut}
               label="Sign Out"
+              onClick={handleSignOut}
               trailing={null}
             />
           </Card>
