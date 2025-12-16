@@ -3,11 +3,13 @@ import { useHorizonData, DbPerson } from '@/hooks/useHorizonData';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, UserCircle, Plus, Gift, MessageSquare, Edit, Sparkles } from 'lucide-react';
+import { Heart, Users, UserCircle, Plus, Sparkles, Edit, Calendar, Cake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PersonFormDialog } from '@/components/PersonFormDialog';
 import { ActivityIdeas } from '@/components/ActivityIdeas';
+import { UpcomingDates } from '@/components/UpcomingDates';
 import { useToast } from '@/hooks/use-toast';
+import { format, parseISO, differenceInDays, isBefore, addYears } from 'date-fns';
 
 type RelationshipType = 'partner' | 'child' | 'parent' | 'sibling' | 'friend' | 'other';
 
@@ -20,17 +22,41 @@ const relationshipConfig: Record<RelationshipType, { icon: typeof Heart; label: 
   other: { icon: UserCircle, label: 'Other', color: 'text-muted-foreground' },
 };
 
+function getNextOccurrence(dateStr: string): Date {
+  const date = parseISO(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let nextDate = new Date(today.getFullYear(), date.getMonth(), date.getDate());
+  if (isBefore(nextDate, today)) {
+    nextDate = addYears(nextDate, 1);
+  }
+  return nextDate;
+}
+
+function getDaysUntil(dateStr: string): number {
+  const nextOccurrence = getNextOccurrence(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return differenceInDays(nextOccurrence, today);
+}
+
 interface PersonCardProps {
   person: DbPerson;
   index: number;
   userCity?: string;
+  personDates: { title: string; date: string; type: string; id: string }[];
   onEdit: (person: DbPerson) => void;
 }
 
-function PersonCard({ person, index, userCity, onEdit }: PersonCardProps) {
+function PersonCard({ person, index, userCity, personDates, onEdit }: PersonCardProps) {
   const [showIdeas, setShowIdeas] = useState(false);
   const config = relationshipConfig[person.relationship as RelationshipType] || relationshipConfig.other;
   const Icon = config.icon;
+
+  // Get nearest upcoming date
+  const upcomingDate = personDates
+    .map(d => ({ ...d, daysUntil: getDaysUntil(d.date) }))
+    .sort((a, b) => a.daysUntil - b.daysUntil)[0];
 
   return (
     <Card
@@ -64,6 +90,20 @@ function PersonCard({ person, index, userCity, onEdit }: PersonCardProps) {
             </Button>
           </div>
 
+          {/* Upcoming date badge */}
+          {upcomingDate && upcomingDate.daysUntil <= 30 && (
+            <div className="flex items-center gap-1.5 mb-2">
+              {upcomingDate.type === 'birthday' ? (
+                <Cake className="w-3.5 h-3.5 text-highlight" />
+              ) : (
+                <Calendar className="w-3.5 h-3.5 text-primary" />
+              )}
+              <span className="text-xs text-muted-foreground">
+                {upcomingDate.title} in {upcomingDate.daysUntil} days
+              </span>
+            </div>
+          )}
+
           {person.interests && person.interests.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {person.interests.slice(0, 3).map((interest) => (
@@ -91,10 +131,6 @@ function PersonCard({ person, index, userCity, onEdit }: PersonCardProps) {
       </div>
 
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-        <Button variant="ghost" size="sm" className="flex-1">
-          <Gift className="w-4 h-4" />
-          Gift Ideas
-        </Button>
         <Button
           variant="ghost"
           size="sm"
@@ -116,7 +152,7 @@ function PersonCard({ person, index, userCity, onEdit }: PersonCardProps) {
 }
 
 export default function PeoplePage() {
-  const { people, profile, addPerson, updatePerson, deletePerson } = useHorizonData();
+  const { people, profile, importantDates, addPerson, updatePerson, deletePerson, getPersonDates } = useHorizonData();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<DbPerson | null>(null);
   const { toast } = useToast();
@@ -131,13 +167,16 @@ export default function PeoplePage() {
     setDialogOpen(true);
   };
 
-  const handleSavePerson = async (personData: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleSavePerson = async (
+    personData: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>,
+    dates: { title: string; date: string; type: string }[]
+  ) => {
     try {
       if (editingPerson) {
-        await updatePerson(editingPerson.id, personData);
+        await updatePerson(editingPerson.id, personData, dates);
         toast({ title: 'Person updated', description: `${personData.name} has been updated.` });
       } else {
-        await addPerson(personData);
+        await addPerson(personData, dates);
         toast({ title: 'Person added', description: `${personData.name} has been added.` });
       }
     } catch (error) {
@@ -166,6 +205,11 @@ export default function PeoplePage() {
 
   const relationshipOrder: RelationshipType[] = ['partner', 'child', 'parent', 'sibling', 'friend', 'other'];
 
+  // Get editing person's dates
+  const editingPersonDates = editingPerson
+    ? getPersonDates(editingPerson.id).map(d => ({ id: d.id, title: d.title, date: d.date, type: d.type }))
+    : [];
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <Header />
@@ -185,6 +229,15 @@ export default function PeoplePage() {
             Add Person
           </Button>
         </div>
+
+        {/* Upcoming Dates Section */}
+        {importantDates.length > 0 && (
+          <UpcomingDates 
+            dates={importantDates} 
+            people={people} 
+            userCity={profile?.city || undefined} 
+          />
+        )}
 
         {people.length === 0 ? (
           <Card className="p-8 text-center">
@@ -216,6 +269,7 @@ export default function PeoplePage() {
                       person={person}
                       index={index}
                       userCity={profile?.city || undefined}
+                      personDates={getPersonDates(person.id).map(d => ({ id: d.id, title: d.title, date: d.date, type: d.type }))}
                       onEdit={handleEditPerson}
                     />
                   ))}
@@ -230,6 +284,7 @@ export default function PeoplePage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         person={editingPerson}
+        existingDates={editingPersonDates}
         onSave={handleSavePerson}
         onDelete={editingPerson ? handleDeletePerson : undefined}
       />

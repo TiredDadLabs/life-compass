@@ -21,7 +21,7 @@ interface ImportantDate {
 }
 
 interface RequestBody {
-  type: 'gift_ideas' | 'date_ideas' | 'activity_ideas' | 'weekly_summary' | 'reminder';
+  type: 'gift_ideas' | 'date_ideas' | 'activity_ideas' | 'weekly_summary' | 'reminder' | 'celebration_ideas';
   person?: Person;
   importantDate?: ImportantDate;
   upcomingDates?: ImportantDate[];
@@ -68,6 +68,40 @@ For each gift, provide:
 - Approximate price range ($, $$, or $$$)
 
 Focus on thoughtful, personal gifts that show you know this person.`;
+        break;
+
+      case 'celebration_ideas':
+        if (!importantDate) {
+          throw new Error("importantDate required for celebration_ideas");
+        }
+        userPrompt = `Generate celebration ideas for an upcoming date:
+- Event: ${importantDate.title}
+- Date: ${importantDate.date}
+- Type: ${importantDate.type}
+${importantDate.person_name ? `- For: ${importantDate.person_name}` : ''}
+${person ? `
+About ${person.name}:
+- Relationship: ${person.relationship}
+${person.interests?.length ? `- Interests: ${person.interests.join(', ')}` : ''}
+${person.notes ? `- Notes: ${person.notes}` : ''}
+` : ''}
+${userCity ? `Location: ${userCity}` : ''}
+${daysUntil !== undefined ? `Days until event: ${daysUntil}` : ''}
+
+Please provide:
+
+**🎁 Gift Ideas** (3-4 personalized suggestions)
+For each gift: name, why it's meaningful, and price range ($, $$, $$$)
+
+**🎉 Celebration Ideas** (2-3 ways to celebrate)
+${userCity ? `Include local suggestions for ${userCity} if relevant.` : ''}
+Focus on experiences and meaningful gestures.
+
+**📝 Planning Checklist**
+${daysUntil !== undefined && daysUntil <= 7 ? 'Since this is coming up soon, focus on quick action items.' : ''}
+3-4 actionable items to prepare for this date.
+
+Keep it warm, practical, and not overwhelming. Prioritize quality time and thoughtfulness over expensive gifts.`;
         break;
 
       case 'date_ideas':
