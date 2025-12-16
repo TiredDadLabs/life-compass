@@ -349,6 +349,12 @@ export function useHorizonData() {
     
     const increment = (goal.target_per_week - goal.ramp_start) / goal.ramp_duration_weeks;
     const currentTarget = goal.ramp_start + (increment * goal.ramp_current_week);
+    
+    // Use whole numbers for session-based goals (you can't have 1.3 dates)
+    if (goal.unit === 'sessions') {
+      return Math.round(currentTarget);
+    }
+    // Allow decimals for hour-based goals
     return Math.round(currentTarget * 10) / 10;
   };
 
