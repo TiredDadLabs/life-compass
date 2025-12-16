@@ -1,10 +1,15 @@
-import { useHorizon } from '@/contexts/HorizonContext';
+import { useState } from 'react';
+import { useHorizonData, DbPerson } from '@/hooks/useHorizonData';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, Users, UserCircle, Plus, MapPin, Gift, MessageSquare } from 'lucide-react';
+import { Heart, Users, UserCircle, Plus, Gift, MessageSquare, Edit, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Person, RelationshipType } from '@/types/horizon';
+import { PersonFormDialog } from '@/components/PersonFormDialog';
+import { ActivityIdeas } from '@/components/ActivityIdeas';
+import { useToast } from '@/hooks/use-toast';
+
+type RelationshipType = 'partner' | 'child' | 'parent' | 'sibling' | 'friend' | 'other';
 
 const relationshipConfig: Record<RelationshipType, { icon: typeof Heart; label: string; color: string }> = {
   partner: { icon: Heart, label: 'Partner', color: 'text-primary' },
@@ -16,17 +21,20 @@ const relationshipConfig: Record<RelationshipType, { icon: typeof Heart; label: 
 };
 
 interface PersonCardProps {
-  person: Person;
+  person: DbPerson;
   index: number;
+  userCity?: string;
+  onEdit: (person: DbPerson) => void;
 }
 
-function PersonCard({ person, index }: PersonCardProps) {
-  const config = relationshipConfig[person.relationship];
+function PersonCard({ person, index, userCity, onEdit }: PersonCardProps) {
+  const [showIdeas, setShowIdeas] = useState(false);
+  const config = relationshipConfig[person.relationship as RelationshipType] || relationshipConfig.other;
   const Icon = config.icon;
 
   return (
     <Card
-      className="p-5 animate-fade-in-up opacity-0 hover:shadow-glow cursor-pointer"
+      className="p-5 animate-fade-in-up opacity-0 hover:shadow-glow"
       style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}
     >
       <div className="flex items-start gap-4">
@@ -46,9 +54,17 @@ function PersonCard({ person, index }: PersonCardProps) {
               <Icon className="w-3 h-3" />
               {config.label}
             </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto h-8 w-8"
+              onClick={() => onEdit(person)}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
           </div>
 
-          {person.interests.length > 0 && (
+          {person.interests && person.interests.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
               {person.interests.slice(0, 3).map((interest) => (
                 <span
@@ -79,25 +95,76 @@ function PersonCard({ person, index }: PersonCardProps) {
           <Gift className="w-4 h-4" />
           Gift Ideas
         </Button>
-        <Button variant="ghost" size="sm" className="flex-1">
-          <MessageSquare className="w-4 h-4" />
-          Plan Time
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex-1"
+          onClick={() => setShowIdeas(!showIdeas)}
+        >
+          <Sparkles className="w-4 h-4" />
+          {person.relationship === 'partner' ? 'Date Ideas' : 'Activities'}
         </Button>
       </div>
+
+      {showIdeas && (
+        <div className="mt-4">
+          <ActivityIdeas person={person} userCity={userCity} />
+        </div>
+      )}
     </Card>
   );
 }
 
 export default function PeoplePage() {
-  const { people } = useHorizon();
+  const { people, profile, addPerson, updatePerson, deletePerson } = useHorizonData();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<DbPerson | null>(null);
+  const { toast } = useToast();
+
+  const handleAddPerson = () => {
+    setEditingPerson(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditPerson = (person: DbPerson) => {
+    setEditingPerson(person);
+    setDialogOpen(true);
+  };
+
+  const handleSavePerson = async (personData: Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    try {
+      if (editingPerson) {
+        await updatePerson(editingPerson.id, personData);
+        toast({ title: 'Person updated', description: `${personData.name} has been updated.` });
+      } else {
+        await addPerson(personData);
+        toast({ title: 'Person added', description: `${personData.name} has been added.` });
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save person.', variant: 'destructive' });
+      throw error;
+    }
+  };
+
+  const handleDeletePerson = async (personId: string) => {
+    try {
+      await deletePerson(personId);
+      toast({ title: 'Person removed', description: 'The person has been removed.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to remove person.', variant: 'destructive' });
+      throw error;
+    }
+  };
 
   // Group by relationship type
   const grouped = people.reduce((acc, person) => {
-    const type = person.relationship;
+    const type = person.relationship as RelationshipType;
     if (!acc[type]) acc[type] = [];
     acc[type].push(person);
     return acc;
-  }, {} as Record<RelationshipType, Person[]>);
+  }, {} as Record<RelationshipType, DbPerson[]>);
+
+  const relationshipOrder: RelationshipType[] = ['partner', 'child', 'parent', 'sibling', 'friend', 'other'];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -113,26 +180,59 @@ export default function PeoplePage() {
               The ones who matter most
             </p>
           </div>
-          <Button variant="horizon" size="sm">
+          <Button variant="horizon" size="sm" onClick={handleAddPerson}>
             <Plus className="w-4 h-4" />
             Add Person
           </Button>
         </div>
 
-        {Object.entries(grouped).map(([type, persons]) => (
-          <section key={type} className="space-y-3">
-            <h3 className="font-display font-medium text-foreground capitalize">
-              {relationshipConfig[type as RelationshipType]?.label || type}
-              {persons.length > 1 && 's'}
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {persons.map((person, index) => (
-                <PersonCard key={person.id} person={person} index={index} />
-              ))}
-            </div>
-          </section>
-        ))}
+        {people.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-semibold text-foreground mb-2">No people added yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Add the important people in your life to get personalized activity ideas.
+            </p>
+            <Button variant="horizon" onClick={handleAddPerson}>
+              <Plus className="w-4 h-4" />
+              Add Your First Person
+            </Button>
+          </Card>
+        ) : (
+          relationshipOrder.map((type) => {
+            const persons = grouped[type];
+            if (!persons || persons.length === 0) return null;
+
+            return (
+              <section key={type} className="space-y-3">
+                <h3 className="font-display font-medium text-foreground capitalize">
+                  {relationshipConfig[type]?.label || type}
+                  {persons.length > 1 && 's'}
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {persons.map((person, index) => (
+                    <PersonCard
+                      key={person.id}
+                      person={person}
+                      index={index}
+                      userCity={profile?.city || undefined}
+                      onEdit={handleEditPerson}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })
+        )}
       </main>
+
+      <PersonFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        person={editingPerson}
+        onSave={handleSavePerson}
+        onDelete={editingPerson ? handleDeletePerson : undefined}
+      />
 
       <BottomNav />
     </div>

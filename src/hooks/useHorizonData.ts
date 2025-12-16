@@ -223,6 +223,59 @@ export function useHorizonData() {
     await fetchPeople();
   };
 
+  const updatePerson = async (personId: string, updates: Partial<Omit<DbPerson, 'id' | 'user_id' | 'created_at' | 'updated_at'>>) => {
+    const { error } = await supabase
+      .from('people')
+      .update(updates)
+      .eq('id', personId);
+    
+    if (error) {
+      console.error('Error updating person:', error);
+      throw error;
+    }
+    
+    await fetchPeople();
+  };
+
+  const deletePerson = async (personId: string) => {
+    const { error } = await supabase
+      .from('people')
+      .delete()
+      .eq('id', personId);
+    
+    if (error) {
+      console.error('Error deleting person:', error);
+      throw error;
+    }
+    
+    await fetchPeople();
+  };
+
+  const logGoalActivity = async (goalId: string, durationMinutes?: number, notes?: string, peopleInvolved?: string[]) => {
+    if (!user) return;
+    
+    const { error: logError } = await supabase
+      .from('goal_logs')
+      .insert({
+        user_id: user.id,
+        goal_id: goalId,
+        duration_minutes: durationMinutes || null,
+        notes: notes || null,
+        people_involved: peopleInvolved || null,
+      });
+    
+    if (logError) {
+      console.error('Error logging activity:', logError);
+      throw logError;
+    }
+
+    // Also increment current_progress
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+      await updateGoalProgress(goalId, goal.current_progress + 1);
+    }
+  };
+
   const getCurrentRampedTarget = (goal: DbGoal): number => {
     if (!goal.ramp_enabled || !goal.ramp_start || !goal.ramp_duration_weeks || !goal.ramp_current_week) {
       return goal.target_per_week;
@@ -248,6 +301,9 @@ export function useHorizonData() {
     addGoal,
     updateGoalProgress,
     addPerson,
+    updatePerson,
+    deletePerson,
+    logGoalActivity,
     getCurrentRampedTarget,
   };
 }

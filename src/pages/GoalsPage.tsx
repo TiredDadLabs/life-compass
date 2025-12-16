@@ -1,10 +1,13 @@
-import { useHorizon } from '@/contexts/HorizonContext';
+import { useHorizonData, DbGoal } from '@/hooks/useHorizonData';
 import { Header, BottomNav } from '@/components/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Goal, GoalCategory } from '@/types/horizon';
 import { Heart, Users, Dumbbell, Briefcase, Sparkles, Plus, TrendingUp, Check, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WeekOverWeekTracker } from '@/components/WeekOverWeekTracker';
+import { useToast } from '@/hooks/use-toast';
+
+type GoalCategory = 'relationship' | 'kids' | 'health' | 'work' | 'self';
 
 const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; color: string; bgColor: string }> = {
   relationship: { icon: Heart, label: 'Relationship', color: 'text-primary', bgColor: 'bg-primary/10' },
@@ -15,18 +18,19 @@ const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; 
 };
 
 interface GoalDetailCardProps {
-  goal: Goal;
+  goal: DbGoal;
   index: number;
+  onLogProgress: (goalId: string) => Promise<void>;
+  getCurrentRampedTarget: (goal: DbGoal) => number;
 }
 
-function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
-  const { updateGoalProgress, getCurrentRampedTarget } = useHorizon();
-  const config = categoryConfig[goal.category];
+function GoalDetailCard({ goal, index, onLogProgress, getCurrentRampedTarget }: GoalDetailCardProps) {
+  const config = categoryConfig[goal.category as GoalCategory] || categoryConfig.self;
   const Icon = config.icon;
   
   const target = getCurrentRampedTarget(goal);
-  const progress = Math.min((goal.currentAmount / target) * 100, 100);
-  const isComplete = goal.currentAmount >= target;
+  const progress = Math.min((goal.current_progress / target) * 100, 100);
+  const isComplete = goal.current_progress >= target;
 
   return (
     <Card
@@ -59,7 +63,7 @@ function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
         <div>
           <div className="flex items-baseline justify-between mb-2">
             <span className="text-3xl font-display font-bold text-foreground">
-              {goal.currentAmount}
+              {goal.current_progress}
               <span className="text-lg text-muted-foreground font-sans font-normal"> / {target}</span>
             </span>
             <span className="text-sm text-muted-foreground">
@@ -79,7 +83,7 @@ function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
         </div>
 
         {/* Ramping info */}
-        {goal.rampingEnabled && goal.currentWeek && goal.rampWeeks && (
+        {goal.ramp_enabled && goal.ramp_current_week && goal.ramp_duration_weeks && (
           <div className="flex items-center gap-2 p-3 rounded-xl bg-highlight/10">
             <TrendingUp className="w-4 h-4 text-highlight" />
             <div className="flex-1">
@@ -87,7 +91,7 @@ function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
                 Building up gradually
               </p>
               <p className="text-xs text-muted-foreground">
-                Week {goal.currentWeek} of {goal.rampWeeks} • Started at {goal.startAmount} {goal.unit}
+                Week {goal.ramp_current_week} of {goal.ramp_duration_weeks} • Started at {goal.ramp_start} {goal.unit}
               </p>
             </div>
           </div>
@@ -98,7 +102,7 @@ function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
           <Button
             variant={isComplete ? "success" : "horizon"}
             className="flex-1"
-            onClick={() => updateGoalProgress(goal.id, 1)}
+            onClick={() => onLogProgress(goal.id)}
           >
             <Plus className="w-4 h-4" />
             Log {goal.unit === 'sessions' ? 'Session' : 'Hour'}
@@ -113,16 +117,30 @@ function GoalDetailCard({ goal, index }: GoalDetailCardProps) {
 }
 
 export default function GoalsPage() {
-  const { goals } = useHorizon();
+  const { goals, logGoalActivity, getCurrentRampedTarget } = useHorizonData();
+  const { toast } = useToast();
+
+  const handleLogProgress = async (goalId: string) => {
+    try {
+      await logGoalActivity(goalId);
+      toast({ title: 'Progress logged!', description: 'Keep up the great work!' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to log progress.', variant: 'destructive' });
+    }
+  };
 
   // Group by category
   const grouped = goals.reduce((acc, goal) => {
-    if (!acc[goal.category]) acc[goal.category] = [];
-    acc[goal.category].push(goal);
+    const category = goal.category as GoalCategory;
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(goal);
     return acc;
-  }, {} as Record<GoalCategory, Goal[]>);
+  }, {} as Record<GoalCategory, DbGoal[]>);
 
   const categoryOrder: GoalCategory[] = ['relationship', 'kids', 'health', 'work', 'self'];
+
+  const completedCount = goals.filter((g) => g.current_progress >= getCurrentRampedTarget(g)).length;
+  const inProgressCount = goals.filter((g) => g.current_progress > 0 && g.current_progress < getCurrentRampedTarget(g)).length;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -149,13 +167,13 @@ export default function GoalsPage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <p className="text-3xl font-display font-bold text-foreground">
-                {goals.filter((g) => g.currentAmount >= g.targetAmount).length}
+                {completedCount}
               </p>
               <p className="text-sm text-muted-foreground">Completed</p>
             </div>
             <div>
               <p className="text-3xl font-display font-bold text-foreground">
-                {goals.filter((g) => g.currentAmount > 0 && g.currentAmount < g.targetAmount).length}
+                {inProgressCount}
               </p>
               <p className="text-sm text-muted-foreground">In Progress</p>
             </div>
@@ -167,6 +185,19 @@ export default function GoalsPage() {
             </div>
           </div>
         </Card>
+
+        {/* Week over Week Tracker */}
+        {goals.length > 0 && (
+          <WeekOverWeekTracker
+            goals={goals.map(g => ({
+              id: g.id,
+              name: g.name,
+              category: g.category,
+              target_per_week: g.target_per_week,
+              unit: g.unit,
+            }))}
+          />
+        )}
 
         {/* Goals by category */}
         {categoryOrder.map((category) => {
@@ -185,12 +216,32 @@ export default function GoalsPage() {
               </div>
               <div className="space-y-4">
                 {categoryGoals.map((goal, index) => (
-                  <GoalDetailCard key={goal.id} goal={goal} index={index} />
+                  <GoalDetailCard
+                    key={goal.id}
+                    goal={goal}
+                    index={index}
+                    onLogProgress={handleLogProgress}
+                    getCurrentRampedTarget={getCurrentRampedTarget}
+                  />
                 ))}
               </div>
             </section>
           );
         })}
+
+        {goals.length === 0 && (
+          <Card className="p-8 text-center">
+            <Sparkles className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="font-semibold text-foreground mb-2">No goals set yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Set weekly goals to track what matters most to you.
+            </p>
+            <Button variant="horizon">
+              <Plus className="w-4 h-4" />
+              Create Your First Goal
+            </Button>
+          </Card>
+        )}
       </main>
 
       <BottomNav />
