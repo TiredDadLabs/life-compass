@@ -174,6 +174,9 @@ export function LifestyleFormDialog({ trigger, onSubmit }: LifestyleFormDialogPr
   };
 
   const handleSubmit = async () => {
+    // Prevent double-submissions
+    if (isSubmitting) return;
+    
     const enabledGoals = goals.filter(g => g.enabled && g.name.trim());
     if (enabledGoals.length === 0) return;
 
