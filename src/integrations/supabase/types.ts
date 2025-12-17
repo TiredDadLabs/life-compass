@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_connections: {
+        Row: {
+          access_token: string
+          calendar_email: string | null
+          created_at: string
+          id: string
+          provider: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          calendar_email?: string | null
+          created_at?: string
+          id?: string
+          provider: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          calendar_email?: string | null
+          created_at?: string
+          id?: string
+          provider?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_recommendations: {
+        Row: {
+          calendar_event_id: string | null
+          created_at: string
+          description: string | null
+          goal_id: string | null
+          id: string
+          recommended_end: string
+          recommended_start: string
+          status: string
+          title: string
+          user_id: string
+          week_of: string
+        }
+        Insert: {
+          calendar_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id?: string | null
+          id?: string
+          recommended_end: string
+          recommended_start: string
+          status?: string
+          title: string
+          user_id: string
+          week_of?: string
+        }
+        Update: {
+          calendar_event_id?: string | null
+          created_at?: string
+          description?: string | null
+          goal_id?: string | null
+          id?: string
+          recommended_end?: string
+          recommended_start?: string
+          status?: string
+          title?: string
+          user_id?: string
+          week_of?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_recommendations_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_logs: {
         Row: {
           duration_minutes: number | null
