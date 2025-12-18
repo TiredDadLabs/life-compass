@@ -6,6 +6,7 @@ import { TimeCheck } from '@/components/TimeCheck';
 import { WeeklyGoals } from '@/components/WeeklyGoals';
 import { ImportantDates } from '@/components/ImportantDates';
 import { AIInsights } from '@/components/AIInsights';
+import { TodoList } from '@/components/TodoList';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, RefreshCw } from 'lucide-react';
@@ -122,6 +123,11 @@ export default function Dashboard() {
         {/* Time Check - Key Emotional Hook */}
         <section>
           <TimeCheck />
+        </section>
+
+        {/* To-Do List */}
+        <section>
+          <TodoList />
         </section>
 
         {/* Weekly Goals */}
