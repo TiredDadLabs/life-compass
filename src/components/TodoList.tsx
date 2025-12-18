@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Check, Circle, Trash2, Calendar, Flag } from 'lucide-react';
+import { Plus, Check, Circle, Trash2, Calendar, Flag, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -46,6 +52,7 @@ export function TodoList() {
   const [isLoading, setIsLoading] = useState(true);
   const [newTodo, setNewTodo] = useState('');
   const [newPriority, setNewPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [newDueDate, setNewDueDate] = useState<Date | undefined>(undefined);
   const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
@@ -87,6 +94,7 @@ export function TodoList() {
           user_id: user.id,
           title: newTodo.trim(),
           priority: newPriority,
+          due_date: newDueDate ? format(newDueDate, 'yyyy-MM-dd') : null,
         })
         .select()
         .single();
@@ -98,6 +106,7 @@ export function TodoList() {
       };
       setTodos([newTodoItem, ...todos]);
       setNewTodo('');
+      setNewDueDate(undefined);
       toast.success('Todo added');
     } catch (error) {
       console.error('Error adding todo:', error);
@@ -163,27 +172,54 @@ export function TodoList() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Add new todo */}
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add a new task..."
-            value={newTodo}
-            onChange={(e) => setNewTodo(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addTodo()}
-            className="flex-1"
-          />
-          <Select value={newPriority} onValueChange={(v: 'low' | 'medium' | 'high') => setNewPriority(v)}>
-            <SelectTrigger className="w-28">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={addTodo} disabled={!newTodo.trim() || isAdding} size="icon">
-            <Plus className="w-4 h-4" />
-          </Button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Add a new task..."
+              value={newTodo}
+              onChange={(e) => setNewTodo(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addTodo()}
+              className="flex-1"
+            />
+            <Button onClick={addTodo} disabled={!newTodo.trim() || isAdding} size="icon">
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "flex-1 justify-start text-left font-normal",
+                    !newDueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {newDueDate ? format(newDueDate, "PPP") : <span>Due date (optional)</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={newDueDate}
+                  onSelect={setNewDueDate}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <Select value={newPriority} onValueChange={(v: 'low' | 'medium' | 'high') => setNewPriority(v)}>
+              <SelectTrigger className="w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Todo list */}
