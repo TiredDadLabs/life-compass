@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { Onboarding } from "@/components/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import GoalsPage from "./pages/GoalsPage";
+import TodosPage from "./pages/TodosPage";
 import PeoplePage from "./pages/PeoplePage";
 import PerksPage from "./pages/PerksPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -80,6 +81,11 @@ function AppRoutes() {
         <Route path="/goals" element={
           <ProtectedRoute>
             <GoalsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/todos" element={
+          <ProtectedRoute>
+            <TodosPage />
           </ProtectedRoute>
         } />
         <Route path="/people" element={
