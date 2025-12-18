@@ -25,23 +25,20 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Listen for password recovery event
+  // Check if we're in password reset flow on mount
   useEffect(() => {
+    const isResetFlow = searchParams.get('reset') === 'true';
+    
+    // If reset=true in URL, set mode immediately (session will be verified when submitting)
+    if (isResetFlow) {
+      setMode('reset');
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setMode('reset');
       }
     });
-
-    // Check if we're coming back from a reset link
-    if (searchParams.get('reset') === 'true') {
-      // Check if user has a recovery session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setMode('reset');
-        }
-      });
-    }
 
     return () => subscription.unsubscribe();
   }, [searchParams]);
