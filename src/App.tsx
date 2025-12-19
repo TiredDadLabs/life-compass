@@ -12,6 +12,7 @@ import TodosPage from "./pages/TodosPage";
 import PeoplePage from "./pages/PeoplePage";
 import PerksPage from "./pages/PerksPage";
 import SettingsPage from "./pages/SettingsPage";
+import SelfCarePage from "./pages/SelfCarePage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -86,6 +87,11 @@ function AppRoutes() {
         <Route path="/todos" element={
           <ProtectedRoute>
             <TodosPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/self-care" element={
+          <ProtectedRoute>
+            <SelfCarePage />
           </ProtectedRoute>
         } />
         <Route path="/people" element={
