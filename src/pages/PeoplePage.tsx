@@ -52,7 +52,14 @@ interface PersonCardProps {
 function PersonCard({ person, index, userCity, personDates, onEdit }: PersonCardProps) {
   const [showIdeas, setShowIdeas] = useState(false);
   const [showGifts, setShowGifts] = useState(false);
-  const config = relationshipConfig[person.relationship as RelationshipType] || relationshipConfig.other;
+  
+  // Check if it's a standard relationship type or custom
+  const standardTypes: RelationshipType[] = ['partner', 'child', 'parent', 'sibling', 'friend', 'other'];
+  const isStandardType = standardTypes.includes(person.relationship as RelationshipType);
+  const config = isStandardType 
+    ? relationshipConfig[person.relationship as RelationshipType] 
+    : relationshipConfig.other;
+  const displayLabel = isStandardType ? config.label : person.relationship;
   const Icon = config.icon;
 
   // Get nearest upcoming date
@@ -80,7 +87,7 @@ function PersonCard({ person, index, userCity, personDates, onEdit }: PersonCard
               config.color
             )}>
               <Icon className="w-3 h-3" />
-              {config.label}
+              {displayLabel}
             </span>
             <Button
               variant="ghost"
@@ -212,9 +219,12 @@ export default function PeoplePage() {
     }
   };
 
-  // Group by relationship type
+  // Group by relationship type (custom relationships go under 'other')
+  const standardTypes: RelationshipType[] = ['partner', 'child', 'parent', 'sibling', 'friend', 'other'];
   const grouped = people.reduce((acc, person) => {
-    const type = person.relationship as RelationshipType;
+    const type = standardTypes.includes(person.relationship as RelationshipType) 
+      ? person.relationship as RelationshipType 
+      : 'other';
     if (!acc[type]) acc[type] = [];
     acc[type].push(person);
     return acc;
