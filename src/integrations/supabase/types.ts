@@ -100,6 +100,90 @@ export type Database = {
           },
         ]
       }
+      downtime_logs: {
+        Row: {
+          created_at: string
+          downtime_type: string
+          duration_minutes: number
+          id: string
+          logged_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          downtime_type: string
+          duration_minutes: number
+          id?: string
+          logged_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          downtime_type?: string
+          duration_minutes?: number
+          id?: string
+          logged_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercise_goals: {
+        Row: {
+          created_at: string
+          id: string
+          sessions_per_week: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sessions_per_week?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sessions_per_week?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercise_logs: {
+        Row: {
+          activity_type: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          logged_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          logged_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          logged_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       goal_logs: {
         Row: {
           duration_minutes: number | null
@@ -233,6 +317,75 @@ export type Database = {
           },
         ]
       }
+      mood_checkins: {
+        Row: {
+          created_at: string
+          date: string
+          drained_by: string | null
+          energized_by: string | null
+          energy_level: number | null
+          id: string
+          mood_score: number | null
+          stress_level: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          drained_by?: string | null
+          energized_by?: string | null
+          energy_level?: number | null
+          id?: string
+          mood_score?: number | null
+          stress_level?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          drained_by?: string | null
+          energized_by?: string | null
+          energy_level?: number | null
+          id?: string
+          mood_score?: number | null
+          stress_level?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nutrition_checkins: {
+        Row: {
+          ate_regular_meals: boolean | null
+          ate_whole_foods: boolean | null
+          created_at: string
+          date: string
+          drank_enough_water: boolean | null
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          ate_regular_meals?: boolean | null
+          ate_whole_foods?: boolean | null
+          created_at?: string
+          date?: string
+          drank_enough_water?: boolean | null
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          ate_regular_meals?: boolean | null
+          ate_whole_foods?: boolean | null
+          created_at?: string
+          date?: string
+          drank_enough_water?: boolean | null
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       people: {
         Row: {
           avatar_url: string | null
@@ -271,6 +424,39 @@ export type Database = {
           notes?: string | null
           relationship?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      personal_rituals: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          reminder_enabled: boolean | null
+          time_of_day: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          reminder_enabled?: boolean | null
+          time_of_day?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          reminder_enabled?: boolean | null
+          time_of_day?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -316,6 +502,38 @@ export type Database = {
           work_start_hour?: number | null
         }
         Relationships: []
+      }
+      ritual_completions: {
+        Row: {
+          completed_date: string
+          created_at: string
+          id: string
+          ritual_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_date?: string
+          created_at?: string
+          id?: string
+          ritual_id: string
+          user_id: string
+        }
+        Update: {
+          completed_date?: string
+          created_at?: string
+          id?: string
+          ritual_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_completions_ritual_id_fkey"
+            columns: ["ritual_id"]
+            isOneToOne: false
+            referencedRelation: "personal_rituals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       todos: {
         Row: {
