@@ -36,7 +36,8 @@ interface TimeCheckCardProps {
 }
 
 function TimeCheckCard({ awareness, index }: TimeCheckCardProps) {
-  const Icon = relationshipIcons[awareness.relationship];
+  // Use fallback icon for custom relationships
+  const Icon = relationshipIcons[awareness.relationship] || Users;
   const isUrgent = awareness.daysSinceLastActivity > 7;
   const isWarning = awareness.daysSinceLastActivity > 3 && awareness.daysSinceLastActivity <= 7;
 
