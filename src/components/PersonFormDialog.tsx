@@ -41,6 +41,7 @@ const relationshipOptions: { value: RelationshipType; label: string }[] = [
 export function PersonFormDialog({ open, onOpenChange, person, existingDates, onSave, onDelete }: PersonFormDialogProps) {
   const [name, setName] = useState('');
   const [relationship, setRelationship] = useState<RelationshipType>('friend');
+  const [customRelationship, setCustomRelationship] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState('');
   const [notes, setNotes] = useState('');
@@ -59,7 +60,16 @@ export function PersonFormDialog({ open, onOpenChange, person, existingDates, on
   useEffect(() => {
     if (person) {
       setName(person.name);
-      setRelationship(person.relationship as RelationshipType);
+      // Check if the relationship is a standard type or custom
+      const standardTypes: RelationshipType[] = ['partner', 'child', 'parent', 'sibling', 'friend', 'other'];
+      if (standardTypes.includes(person.relationship as RelationshipType)) {
+        setRelationship(person.relationship as RelationshipType);
+        setCustomRelationship('');
+      } else {
+        // It's a custom relationship
+        setRelationship('other');
+        setCustomRelationship(person.relationship);
+      }
       setInterests(person.interests || []);
       setNotes(person.notes || '');
       setLocation(person.location || '');
@@ -81,6 +91,7 @@ export function PersonFormDialog({ open, onOpenChange, person, existingDates, on
     } else {
       setName('');
       setRelationship('friend');
+      setCustomRelationship('');
       setInterests([]);
       setNotes('');
       setLocation('');
@@ -131,9 +142,14 @@ export function PersonFormDialog({ open, onOpenChange, person, existingDates, on
         dates.push({ title: cd.title, date: cd.date, type: 'custom' });
       });
 
+      // Use custom relationship if "other" is selected and a custom value is provided
+      const finalRelationship = relationship === 'other' && customRelationship.trim() 
+        ? customRelationship.trim() 
+        : relationship;
+
       await onSave({
         name: name.trim(),
-        relationship,
+        relationship: finalRelationship,
         interests: interests.length > 0 ? interests : null,
         notes: notes.trim() || null,
         location: location.trim() || null,
@@ -197,6 +213,14 @@ export function PersonFormDialog({ open, onOpenChange, person, existingDates, on
                 ))}
               </SelectContent>
             </Select>
+            {relationship === 'other' && (
+              <Input
+                value={customRelationship}
+                onChange={(e) => setCustomRelationship(e.target.value)}
+                placeholder="e.g., Cousin, Mentor, Neighbor..."
+                className="mt-2"
+              />
+            )}
           </div>
 
           {/* Important Dates Section */}
