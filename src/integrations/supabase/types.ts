@@ -535,6 +535,99 @@ export type Database = {
           },
         ]
       }
+      screen_time_logs: {
+        Row: {
+          category: string | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          intent_type: string
+          logged_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          intent_type?: string
+          logged_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          intent_type?: string
+          logged_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      screen_time_preferences: {
+        Row: {
+          created_at: string
+          daily_passive_limit_minutes: number | null
+          id: string
+          nudges_enabled: boolean | null
+          shutdown_reminder_enabled: boolean | null
+          shutdown_reminder_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_passive_limit_minutes?: number | null
+          id?: string
+          nudges_enabled?: boolean | null
+          shutdown_reminder_enabled?: boolean | null
+          shutdown_reminder_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_passive_limit_minutes?: number | null
+          id?: string
+          nudges_enabled?: boolean | null
+          shutdown_reminder_enabled?: boolean | null
+          shutdown_reminder_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      shutdown_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          started_at: string
+          suggested_activity: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          suggested_activity?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          suggested_activity?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       todos: {
         Row: {
           created_at: string | null

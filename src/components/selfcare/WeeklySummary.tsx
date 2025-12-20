@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Dumbbell, Apple, Moon, Heart, Sparkles, AlertCircle, Check, TrendingUp } from 'lucide-react';
+import { Dumbbell, Apple, Moon, Heart, Sparkles, AlertCircle, Check, TrendingUp, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { format, startOfWeek, endOfWeek, isWithinInterval, subDays } from 'date-fns';
@@ -30,6 +30,12 @@ interface WeeklySummaryData {
   rituals: {
     completed: number;
     total: number;
+  };
+  screenTime: {
+    totalMinutes: number;
+    intentionalMinutes: number;
+    passiveMinutes: number;
+    passivePercentage: number;
   };
 }
 
@@ -61,7 +67,8 @@ export function WeeklySummary() {
         downtimeRes,
         moodRes,
         ritualsRes,
-        completionsRes
+        completionsRes,
+        screenTimeRes
       ] = await Promise.all([
         supabase
           .from('exercise_logs')
@@ -102,7 +109,13 @@ export function WeeklySummary() {
           .select('*')
           .eq('user_id', user.id)
           .gte('completed_date', weekStartStr)
-          .lte('completed_date', weekEndStr)
+          .lte('completed_date', weekEndStr),
+        supabase
+          .from('screen_time_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('logged_at', weekStart.toISOString())
+          .lte('logged_at', weekEnd.toISOString())
       ]);
 
       const exerciseLogs = exerciseLogsRes.data || [];
@@ -111,6 +124,7 @@ export function WeeklySummary() {
       const moodCheckins = moodRes.data || [];
       const rituals = ritualsRes.data || [];
       const completions = completionsRes.data || [];
+      const screenTimeLogs = screenTimeRes.data || [];
 
       // Calculate downtime days
       const last7Days = Array.from({ length: 7 }, (_, i) => format(subDays(new Date(), i), 'yyyy-MM-dd'));
@@ -142,6 +156,15 @@ export function WeeklySummary() {
       // Calculate rituals
       const uniqueRitualCompletions = new Set(completions.map(c => `${c.ritual_id}-${c.completed_date}`)).size;
 
+      // Calculate screen time
+      const totalScreenTime = screenTimeLogs.reduce((sum, l) => sum + l.duration_minutes, 0);
+      const intentionalTime = screenTimeLogs
+        .filter(l => l.intent_type === 'intentional')
+        .reduce((sum, l) => sum + l.duration_minutes, 0);
+      const passiveTime = screenTimeLogs
+        .filter(l => l.intent_type === 'passive')
+        .reduce((sum, l) => sum + l.duration_minutes, 0);
+
       setData({
         exercise: {
           sessions: exerciseLogs.length,
@@ -166,6 +189,12 @@ export function WeeklySummary() {
         rituals: {
           completed: uniqueRitualCompletions,
           total: rituals.length * 7 // potential completions this week
+        },
+        screenTime: {
+          totalMinutes: totalScreenTime,
+          intentionalMinutes: intentionalTime,
+          passiveMinutes: passiveTime,
+          passivePercentage: totalScreenTime > 0 ? Math.round((passiveTime / totalScreenTime) * 100) : 0
         }
       });
     } catch (error) {
@@ -240,7 +269,20 @@ export function WeeklySummary() {
       });
     }
 
-    return insights.slice(0, 3); // Max 3 insights
+    // Screen time awareness
+    if (data.screenTime.passivePercentage > 60 && data.screenTime.totalMinutes > 180) {
+      insights.push({
+        type: 'warning',
+        text: `${data.screenTime.passivePercentage}% of your screen time this week was passive. That's time you might want back.`
+      });
+    } else if (data.screenTime.passivePercentage < 30 && data.screenTime.totalMinutes > 60) {
+      insights.push({
+        type: 'positive',
+        text: "Most of your screen time was intentional this week. That's mindful use."
+      });
+    }
+
+    return insights.slice(0, 4); // Max 4 insights
   };
 
   const insights = getInsights();
@@ -412,6 +454,56 @@ export function WeeklySummary() {
                 {data.rituals.completed} completed this week
               </p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Screen Time Summary */}
+      {data.screenTime.totalMinutes > 0 && (
+        <Card className="shadow-soft">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Smartphone className="w-4 h-4 text-primary" />
+              <span className="text-sm text-muted-foreground">Screen Time This Week</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <p className="text-lg font-display font-semibold text-foreground">
+                  {Math.round(data.screenTime.totalMinutes / 60 * 10) / 10}h
+                </p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+              <div>
+                <p className="text-lg font-display font-semibold text-primary">
+                  {Math.round(data.screenTime.intentionalMinutes / 60 * 10) / 10}h
+                </p>
+                <p className="text-xs text-muted-foreground">Intentional</p>
+              </div>
+              <div>
+                <p className="text-lg font-display font-semibold text-muted-foreground">
+                  {Math.round(data.screenTime.passiveMinutes / 60 * 10) / 10}h
+                </p>
+                <p className="text-xs text-muted-foreground">Passive</p>
+              </div>
+            </div>
+            {data.screenTime.passivePercentage > 0 && (
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Intentional</span>
+                  <span>Passive</span>
+                </div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden flex">
+                  <div 
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${100 - data.screenTime.passivePercentage}%` }}
+                  />
+                  <div 
+                    className="h-full bg-muted-foreground/30 transition-all"
+                    style={{ width: `${data.screenTime.passivePercentage}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
