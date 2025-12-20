@@ -9,6 +9,7 @@ import { AIInsights } from '@/components/AIInsights';
 import { TodoList } from '@/components/TodoList';
 import { ScreenTimeCard, ShutdownMode, RestPermission } from '@/components/screentime';
 import { SmartNudges, LifeDriftDetection } from '@/components/awareness';
+import { QuickMoodCheckin } from '@/components/emotional';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, RefreshCw } from 'lucide-react';
@@ -102,6 +103,11 @@ export default function Dashboard() {
         {/* Rest Permission - Evening nudge */}
         <section>
           <RestPermission />
+        </section>
+
+        {/* Quick Mood Check-in */}
+        <section>
+          <QuickMoodCheckin />
         </section>
 
         {/* Smart Nudges - Pattern-based awareness */}

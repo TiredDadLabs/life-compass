@@ -7,6 +7,7 @@ import { DowntimeSection } from '@/components/selfcare/DowntimeSection';
 import { MoodCheckinSection } from '@/components/selfcare/MoodCheckinSection';
 import { RitualsSection } from '@/components/selfcare/RitualsSection';
 import { WeeklySummary } from '@/components/selfcare/WeeklySummary';
+import { ContextualRestReminder } from '@/components/emotional';
 import { Dumbbell, Apple, Moon, Heart, Sparkles, BarChart3 } from 'lucide-react';
 
 export default function SelfCarePage() {
@@ -24,8 +25,11 @@ export default function SelfCarePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="max-w-4xl mx-auto px-4 pb-24 pt-4">
-        <div className="mb-6">
+      <main className="max-w-4xl mx-auto px-4 pb-24 pt-4 space-y-6">
+        {/* Late night encouragement */}
+        <ContextualRestReminder page="selfcare" />
+
+        <div>
           <h2 className="font-display text-2xl font-semibold text-foreground mb-1">
             Self-Care
           </h2>

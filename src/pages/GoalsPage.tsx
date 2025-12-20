@@ -8,6 +8,7 @@ import { WeekOverWeekTracker } from '@/components/WeekOverWeekTracker';
 import { useToast } from '@/hooks/use-toast';
 import { GoalFormDialog } from '@/components/GoalFormDialog';
 import { LifestyleFormDialog } from '@/components/LifestyleFormDialog';
+import { ContextualRestReminder } from '@/components/emotional';
 type GoalCategory = 'relationship' | 'kids' | 'health' | 'work' | 'self';
 
 const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; color: string; bgColor: string }> = {
@@ -158,6 +159,9 @@ export default function GoalsPage() {
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {/* Late night reminder */}
+        <ContextualRestReminder page="goals" />
+
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-display text-2xl font-semibold text-foreground">
