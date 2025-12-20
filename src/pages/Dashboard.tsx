@@ -8,7 +8,7 @@ import { ImportantDates } from '@/components/ImportantDates';
 import { AIInsights } from '@/components/AIInsights';
 import { TodoList } from '@/components/TodoList';
 import { ScreenTimeCard, ShutdownMode, RestPermission } from '@/components/screentime';
-import { SmartNudges, LifeDriftDetection } from '@/components/awareness';
+import { SmartNudges, LifeDriftDetection, BalanceScore } from '@/components/awareness';
 import { QuickMoodCheckin } from '@/components/emotional';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -118,6 +118,11 @@ export default function Dashboard() {
         {/* Life Drift Detection */}
         <section>
           <LifeDriftDetection />
+        </section>
+
+        {/* Balance Score */}
+        <section>
+          <BalanceScore />
         </section>
 
         {/* AI Insights */}
