@@ -7,6 +7,7 @@ import { WeeklyGoals } from '@/components/WeeklyGoals';
 import { ImportantDates } from '@/components/ImportantDates';
 import { AIInsights } from '@/components/AIInsights';
 import { TodoList } from '@/components/TodoList';
+import { ScreenTimeCard, ShutdownMode, RestPermission } from '@/components/screentime';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Sparkles, RefreshCw } from 'lucide-react';
@@ -97,6 +98,11 @@ export default function Dashboard() {
           </p>
         </section>
 
+        {/* Rest Permission - Evening nudge */}
+        <section>
+          <RestPermission />
+        </section>
+
         {/* AI Insights */}
         <section className="space-y-4">
           <AIInsights 
@@ -135,9 +141,15 @@ export default function Dashboard() {
           <WeeklyGoals />
         </section>
 
+        {/* Screen Time Awareness */}
+        <section className="grid gap-4 sm:grid-cols-2">
+          <ScreenTimeCard />
+          <ShutdownMode />
+        </section>
+
         {/* Important Dates */}
         <section>
-          <ImportantDates 
+          <ImportantDates
             dates={importantDates.map(d => ({
               id: d.id,
               title: d.title,
