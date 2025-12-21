@@ -9,6 +9,7 @@ import { PersonFormDialog } from '@/components/PersonFormDialog';
 import { ActivityIdeas } from '@/components/ActivityIdeas';
 import { GiftIdeas } from '@/components/GiftIdeas';
 import { UpcomingDates } from '@/components/UpcomingDates';
+import { RelationshipHealthSignals } from '@/components/relationships';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, differenceInDays, isBefore, addYears } from 'date-fns';
 
@@ -256,6 +257,9 @@ export default function PeoplePage() {
             Add Person
           </Button>
         </div>
+
+        {/* Relationship Health Signals */}
+        <RelationshipHealthSignals />
 
         {/* Upcoming Dates Section */}
         {importantDates.length > 0 && (
