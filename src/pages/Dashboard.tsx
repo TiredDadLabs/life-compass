@@ -89,88 +89,68 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background pb-24">
       <Header />
       
-      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Greeting */}
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        {/* Header: Greeting + Quick Check-in */}
         <section className="animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
-          <h2 className="font-display text-2xl font-semibold text-foreground mb-1">
-            Good {getTimeOfDay()}, {userName}
-          </h2>
-          <p className="text-muted-foreground">
-            Week of {format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-1">
+                Good {getTimeOfDay()}, {userName}
+              </h2>
+              <p className="text-muted-foreground">
+                Week of {format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')}
+              </p>
+            </div>
+            <QuickMoodCheckin />
+          </div>
         </section>
 
-        {/* Rest Permission - Evening nudge */}
-        <section>
-          <RestPermission />
-        </section>
+        {/* Contextual Awareness - Only shows when relevant */}
+        <RestPermission />
+        <SmartNudges />
 
-        {/* Quick Mood Check-in */}
-        <section>
-          <QuickMoodCheckin />
-        </section>
-
-        {/* Smart Nudges - Pattern-based awareness */}
-        <section>
-          <SmartNudges />
-        </section>
-
-        {/* Life Drift Detection */}
-        <section>
-          <LifeDriftDetection />
-        </section>
-
-        {/* Balance Score */}
-        <section>
-          <BalanceScore />
-        </section>
-
-        {/* AI Insights */}
+        {/* This Week's Focus */}
         <section className="space-y-4">
-          <AIInsights 
-            people={people.map(p => ({
-              id: p.id,
-              name: p.name,
-              relationship: p.relationship,
-              interests: p.interests || undefined,
-              notes: p.notes || undefined,
-              location: p.location || undefined,
-            }))}
-            upcomingDates={importantDates.map(d => ({
-              id: d.id,
-              title: d.title,
-              date: d.date,
-              type: d.type,
-              person_id: d.person_id || undefined,
-              person_name: d.person_name,
-            }))}
-            userCity={profile?.city || undefined}
-          />
+          <h3 className="font-display text-lg font-medium text-foreground">This Week</h3>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <WeeklyGoals />
+            <TodoList />
+          </div>
         </section>
 
-        {/* Time Check - Key Emotional Hook */}
-        <section>
-          <TimeCheck />
+        {/* What's Slipping - Relationships & Balance */}
+        <section className="space-y-4">
+          <h3 className="font-display text-lg font-medium text-foreground">Check In</h3>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <TimeCheck />
+            <BalanceScore />
+          </div>
         </section>
 
-        {/* To-Do List */}
-        <section>
-          <TodoList />
-        </section>
+        {/* AI Weekly Summary */}
+        <AIInsights 
+          people={people.map(p => ({
+            id: p.id,
+            name: p.name,
+            relationship: p.relationship,
+            interests: p.interests || undefined,
+            notes: p.notes || undefined,
+            location: p.location || undefined,
+          }))}
+          upcomingDates={importantDates.map(d => ({
+            id: d.id,
+            title: d.title,
+            date: d.date,
+            type: d.type,
+            person_id: d.person_id || undefined,
+            person_name: d.person_name,
+          }))}
+          userCity={profile?.city || undefined}
+        />
 
-        {/* Weekly Goals */}
-        <section>
-          <WeeklyGoals />
-        </section>
-
-        {/* Screen Time Awareness */}
-        <section className="grid gap-4 sm:grid-cols-2">
-          <ScreenTimeCard />
-          <ShutdownMode />
-        </section>
-
-        {/* Important Dates */}
-        <section>
+        {/* Upcoming & Awareness */}
+        <section className="space-y-4">
+          <h3 className="font-display text-lg font-medium text-foreground">Coming Up</h3>
           <ImportantDates
             dates={importantDates.map(d => ({
               id: d.id,
@@ -192,6 +172,16 @@ export default function Dashboard() {
             }}
             onGetGiftIdeas={handleGetGiftIdeas}
           />
+        </section>
+
+        {/* Wind Down Tools - Lower priority */}
+        <section className="space-y-4">
+          <h3 className="font-display text-lg font-medium text-muted-foreground">Wind Down</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ScreenTimeCard />
+            <ShutdownMode />
+          </div>
+          <LifeDriftDetection />
         </section>
       </main>
 
