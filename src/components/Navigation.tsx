@@ -1,13 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Target, Users, Heart, Settings } from 'lucide-react';
+import { Home, Target, Users, Heart, CheckSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
   { to: '/goals', icon: Target, label: 'Goals' },
+  { to: '/todos', icon: CheckSquare, label: 'Tasks' },
   { to: '/self-care', icon: Heart, label: 'Self-Care' },
   { to: '/people', icon: Users, label: 'People' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function BottomNav() {
