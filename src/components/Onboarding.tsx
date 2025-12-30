@@ -51,12 +51,6 @@ const emotionalScreens = [
     message: "Horizon helps you stay aligned with what matters most. Not by adding more to your plate—by helping you protect what's already there.",
     micro: "Less noise. More presence.",
   },
-  {
-    id: 'empowerment',
-    headline: "You've got this.",
-    message: "Let's build a life that feels less like survival and more like showing up—for them, and for yourself.",
-    micro: "One intentional moment at a time.",
-  },
   // Time perspective screens
   {
     id: 'weeks',
@@ -78,6 +72,13 @@ const emotionalScreens = [
     message: "Hundreds of hours reclaimed. Not for productivity—for presence. For the years that pass too quickly. For the memories they'll carry forever.",
     micro: "Time well spent.",
     timeframe: "Years",
+  },
+  // Final empowerment screen
+  {
+    id: 'empowerment',
+    headline: "You've got this.",
+    message: "Let's build a life that feels less like survival and more like showing up—for them, and for yourself.",
+    micro: "One intentional moment at a time.",
   },
 ];
 
