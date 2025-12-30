@@ -19,8 +19,50 @@ const priorityOptions: { id: GoalCategory; icon: typeof Heart; label: string; de
   { id: 'self', icon: Sparkles, label: 'Self', description: 'Personal growth and hobbies' },
 ];
 
+// Emotional onboarding screens
+const emotionalScreens = [
+  {
+    id: 'recognition',
+    headline: "You're holding a lot right now.",
+    message: "The meetings, the meals, the bedtimes, the birthdays. The invisible weight of keeping everything running.",
+    micro: "We see you.",
+  },
+  {
+    id: 'connection',
+    headline: "They won't be little forever.",
+    message: "One day you'll look back and wonder where the time went. The first steps, the silly jokes, the quiet moments before bed.",
+    micro: "These years are precious.",
+  },
+  {
+    id: 'validation',
+    headline: "You don't need to do more.",
+    message: "You're not behind. You're not failing. You're a parent doing your best in a world that asks for everything.",
+    micro: "Exhaustion isn't a character flaw.",
+  },
+  {
+    id: 'hope',
+    headline: "Balance isn't a myth.",
+    message: "It's not about perfect days. It's about being present for the moments that matter—without the guilt.",
+    micro: "Small shifts, big difference.",
+  },
+  {
+    id: 'purpose',
+    headline: "This is your quiet partner.",
+    message: "Horizon helps you stay aligned with what matters most. Not by adding more to your plate—by helping you protect what's already there.",
+    micro: "Less noise. More presence.",
+  },
+  {
+    id: 'empowerment',
+    headline: "You've got this.",
+    message: "Let's build a life that feels less like survival and more like showing up—for them, and for yourself.",
+    micro: "One intentional moment at a time.",
+  },
+];
+
 export function Onboarding({ onComplete }: OnboardingProps) {
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState<'emotional' | 'setup'>('emotional');
+  const [emotionalStep, setEmotionalStep] = useState(0);
+  const [setupStep, setSetupStep] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -38,26 +80,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     }));
   };
 
-  const steps = [
-    // Step 0: Welcome
-    <div key="welcome" className="text-center space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
-      <div className="w-24 h-24 mx-auto rounded-3xl gradient-horizon flex items-center justify-center shadow-glow">
-        <Sparkles className="w-12 h-12 text-primary-foreground" />
-      </div>
-      <div className="space-y-3">
-        <h1 className="font-display text-3xl font-bold text-foreground">
-          Welcome to Horizon
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto">
-          When you look back on your life, will you remember how much you worked—or how much time you spent with the people you love?
-        </p>
-      </div>
-      <p className="text-muted-foreground">
-        Let&apos;s set up your personal life compass.
-      </p>
-    </div>,
-
-    // Step 1: Name
+  const setupSteps = [
+    // Name
     <div key="name" className="space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl font-semibold text-foreground">
@@ -81,7 +105,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
     </div>,
 
-    // Step 2: Location
+    // Location
     <div key="location" className="space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl font-semibold text-foreground">
@@ -105,7 +129,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
     </div>,
 
-    // Step 3: Work hours
+    // Work hours
     <div key="work" className="space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl font-semibold text-foreground">
@@ -139,14 +163,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
     </div>,
 
-    // Step 4: Priorities
+    // Priorities
     <div key="priorities" className="space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
       <div className="text-center space-y-2">
         <h2 className="font-display text-2xl font-semibold text-foreground">
           What matters most to you?
         </h2>
         <p className="text-muted-foreground">
-          Select the areas you want to focus on. You can always change these later.
+          Select the areas you want to focus on.
         </p>
       </div>
       <div className="space-y-3">
@@ -196,7 +220,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       </div>
     </div>,
 
-    // Step 5: Ready
+    // Ready
     <div key="ready" className="text-center space-y-6 animate-fade-in-up" style={{ animationFillMode: 'forwards' }}>
       <div className="w-24 h-24 mx-auto rounded-3xl bg-accent flex items-center justify-center">
         <svg className="w-12 h-12 text-accent-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -214,59 +238,169 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     </div>,
   ];
 
-  const canProceed = () => {
-    switch (step) {
-      case 1: return formData.name.trim().length > 0;
-      case 4: return formData.priorities.length > 0;
+  const canProceedSetup = () => {
+    switch (setupStep) {
+      case 0: return formData.name.trim().length > 0;
+      case 3: return formData.priorities.length > 0;
       default: return true;
     }
   };
 
+  // Emotional Phase
+  if (phase === 'emotional') {
+    const currentScreen = emotionalScreens[emotionalStep];
+    const isLastEmotional = emotionalStep === emotionalScreens.length - 1;
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0 gradient-sunrise opacity-60" />
+        
+        <div className="relative flex-1 flex flex-col items-center justify-center p-6">
+          {/* Progress dots */}
+          <div className="absolute top-8 left-0 right-0 flex justify-center gap-2">
+            {emotionalScreens.map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-500",
+                  i === emotionalStep 
+                    ? "w-8 bg-primary" 
+                    : i < emotionalStep 
+                      ? "w-2 bg-primary/40" 
+                      : "w-2 bg-border"
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Main content */}
+          <div 
+            key={currentScreen.id}
+            className="w-full max-w-lg text-center space-y-8 animate-fade-in-up px-4"
+            style={{ animationFillMode: 'forwards' }}
+          >
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="w-20 h-20 rounded-full gradient-horizon flex items-center justify-center shadow-glow animate-pulse-gentle">
+                <Sparkles className="w-10 h-10 text-primary-foreground" />
+              </div>
+            </div>
+
+            {/* Headline */}
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground leading-tight text-balance">
+              {currentScreen.headline}
+            </h1>
+
+            {/* Message */}
+            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-md mx-auto text-balance">
+              {currentScreen.message}
+            </p>
+
+            {/* Micro-copy */}
+            <p className="text-sm text-primary font-medium tracking-wide uppercase">
+              {currentScreen.micro}
+            </p>
+          </div>
+
+          {/* Navigation */}
+          <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-4 px-6">
+            {emotionalStep > 0 && (
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setEmotionalStep(emotionalStep - 1)}
+                className="text-muted-foreground"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+            )}
+            
+            <Button
+              variant="horizon"
+              size="lg"
+              onClick={() => {
+                if (isLastEmotional) {
+                  setPhase('setup');
+                } else {
+                  setEmotionalStep(emotionalStep + 1);
+                }
+              }}
+              className="min-w-[140px] shadow-glow"
+            >
+              {isLastEmotional ? "Let's Begin" : "Continue"}
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </Button>
+          </div>
+
+          {/* Skip option */}
+          {!isLastEmotional && (
+            <button
+              onClick={() => setPhase('setup')}
+              className="absolute bottom-4 text-sm text-muted-foreground hover:text-foreground transition-smooth"
+            >
+              Skip intro
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Setup Phase
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         {/* Progress indicator */}
         <div className="flex justify-center gap-2 mb-8">
-          {steps.map((_, i) => (
+          {setupSteps.map((_, i) => (
             <div
               key={i}
               className={cn(
                 "h-1.5 rounded-full transition-smooth",
-                i === step ? "w-8 bg-primary" : i < step ? "w-4 bg-primary/40" : "w-4 bg-border"
+                i === setupStep ? "w-8 bg-primary" : i < setupStep ? "w-4 bg-primary/40" : "w-4 bg-border"
               )}
             />
           ))}
         </div>
 
         <Card className="p-8">
-          {steps[step]}
+          {setupSteps[setupStep]}
 
           <div className="flex items-center justify-between mt-8">
-            {step > 0 ? (
+            {setupStep > 0 ? (
               <Button
                 variant="ghost"
-                onClick={() => setStep(step - 1)}
+                onClick={() => setSetupStep(setupStep - 1)}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
               </Button>
             ) : (
-              <div />
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setPhase('emotional');
+                  setEmotionalStep(emotionalScreens.length - 1);
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </Button>
             )}
 
-            {step === steps.length - 1 ? (
+            {setupStep === setupSteps.length - 1 ? (
               <Button variant="horizon" size="lg" onClick={onComplete}>
                 Get Started
                 <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (
               <Button
-                variant={step === 0 ? "horizon" : "default"}
-                size={step === 0 ? "lg" : "default"}
-                onClick={() => setStep(step + 1)}
-                disabled={!canProceed()}
+                variant="default"
+                onClick={() => setSetupStep(setupStep + 1)}
+                disabled={!canProceedSetup()}
               >
-                {step === 0 ? "Let's Begin" : "Continue"}
+                Continue
                 <ChevronRight className="w-4 h-4" />
               </Button>
             )}
