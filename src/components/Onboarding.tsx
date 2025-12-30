@@ -57,6 +57,28 @@ const emotionalScreens = [
     message: "Let's build a life that feels less like survival and more like showing up—for them, and for yourself.",
     micro: "One intentional moment at a time.",
   },
+  // Time perspective screens
+  {
+    id: 'weeks',
+    headline: "In just a few weeks...",
+    message: "Many parents notice 15–20 extra minutes each day. That's one more bedtime story. One calmer morning. One conversation without distractions.",
+    micro: "Small moments, felt immediately.",
+    timeframe: "Weeks",
+  },
+  {
+    id: 'months',
+    headline: "Over the coming months...",
+    message: "Those daily moments add up. On average, 2–3 hours per week of uninterrupted family time. Evenings that feel protected. Weekends that feel like weekends again.",
+    micro: "Routines that compound.",
+    timeframe: "Months",
+  },
+  {
+    id: 'years',
+    headline: "Looking back years from now...",
+    message: "Hundreds of hours reclaimed. Not for productivity—for presence. For the years that pass too quickly. For the memories they'll carry forever.",
+    micro: "Time well spent.",
+    timeframe: "Years",
+  },
 ];
 
 export function Onboarding({ onComplete }: OnboardingProps) {
@@ -280,12 +302,23 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             className="w-full max-w-lg text-center space-y-8 animate-fade-in-up px-4"
             style={{ animationFillMode: 'forwards' }}
           >
-            {/* Icon */}
-            <div className="flex justify-center">
-              <div className="w-20 h-20 rounded-full gradient-horizon flex items-center justify-center shadow-glow animate-pulse-gentle">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+            {/* Timeframe badge for time perspective screens */}
+            {'timeframe' in currentScreen && currentScreen.timeframe && (
+              <div className="flex justify-center">
+                <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                  {currentScreen.timeframe}
+                </span>
               </div>
-            </div>
+            )}
+
+            {/* Icon - only show for non-timeframe screens */}
+            {!('timeframe' in currentScreen) && (
+              <div className="flex justify-center">
+                <div className="w-20 h-20 rounded-full gradient-horizon flex items-center justify-center shadow-glow animate-pulse-gentle">
+                  <Sparkles className="w-10 h-10 text-primary-foreground" />
+                </div>
+              </div>
+            )}
 
             {/* Headline */}
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground leading-tight text-balance">
