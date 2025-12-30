@@ -1,5 +1,6 @@
 import { Header, BottomNav } from '@/components/Navigation';
 import { TodoList } from '@/components/TodoList';
+import { TaskAgent } from '@/components/TaskAgent';
 import { ContextualRestReminder } from '@/components/emotional';
 
 export default function TodosPage() {
@@ -11,7 +12,12 @@ export default function TodosPage() {
         {/* Late night reminder */}
         <ContextualRestReminder page="todos" />
 
+        {/* AI Task Agent */}
         <section className="animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards' }}>
+          <TaskAgent />
+        </section>
+
+        <section className="animate-fade-in-up opacity-0" style={{ animationFillMode: 'forwards', animationDelay: '0.1s' }}>
           <h2 className="font-display text-2xl font-semibold text-foreground mb-6">
             Your To-Do List
           </h2>
