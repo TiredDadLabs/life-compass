@@ -243,7 +243,8 @@ export function ImportantDates({ dates, people, onDateAdded, onGetGiftIdeas }: I
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    {(date.type === 'birthday' || date.type === 'anniversary') && (
+                    {/* Only show gift ideas button within 30 days of the date */}
+                    {(date.type === 'birthday' || date.type === 'anniversary') && daysUntil <= 30 && (
                       <Button
                         variant="ghost"
                         size="icon"

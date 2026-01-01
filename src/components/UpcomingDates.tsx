@@ -55,6 +55,9 @@ function DateCard({ date, person, userCity }: DateCardProps) {
   const Icon = config.icon;
   const daysUntil = getDaysUntil(date.date);
   const nextOccurrence = getNextOccurrence(date.date);
+  
+  // Only show gift ideas/recommendations within 30 days
+  const showRecommendations = daysUntil <= 30;
 
   const getUrgencyBadge = () => {
     if (daysUntil === 0) return { text: 'Today!', class: 'bg-destructive text-destructive-foreground' };
@@ -131,9 +134,12 @@ function DateCard({ date, person, userCity }: DateCardProps) {
             </p>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={handleExpand}>
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
+          {/* Only show expand button within 30 days */}
+          {showRecommendations && (
+            <Button variant="ghost" size="sm" onClick={handleExpand}>
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
+          )}
         </div>
 
         {expanded && (
