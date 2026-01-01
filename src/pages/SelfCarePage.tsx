@@ -8,13 +8,15 @@ import { MoodCheckinSection } from '@/components/selfcare/MoodCheckinSection';
 import { RitualsSection } from '@/components/selfcare/RitualsSection';
 import { WeeklySummary } from '@/components/selfcare/WeeklySummary';
 import { ContextualRestReminder } from '@/components/emotional';
-import { Dumbbell, Apple, Moon, Heart, Sparkles, BarChart3 } from 'lucide-react';
+import { BalanceScore } from '@/components/awareness';
+import { Dumbbell, Apple, Moon, Heart, Sparkles, BarChart3, Scale } from 'lucide-react';
 
 export default function SelfCarePage() {
   const [activeTab, setActiveTab] = useState('summary');
 
   const tabs = [
     { value: 'summary', label: 'Summary', icon: BarChart3 },
+    { value: 'balance', label: 'Balance', icon: Scale },
     { value: 'exercise', label: 'Exercise', icon: Dumbbell },
     { value: 'nutrition', label: 'Nutrition', icon: Apple },
     { value: 'downtime', label: 'Rest', icon: Moon },
@@ -54,6 +56,10 @@ export default function SelfCarePage() {
 
           <TabsContent value="summary" className="animate-fade-in-up">
             <WeeklySummary />
+          </TabsContent>
+
+          <TabsContent value="balance" className="animate-fade-in-up">
+            <BalanceScore />
           </TabsContent>
 
           <TabsContent value="exercise" className="animate-fade-in-up">

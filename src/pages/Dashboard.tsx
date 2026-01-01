@@ -6,10 +6,9 @@ import { TimeCheck } from '@/components/TimeCheck';
 import { WeeklyGoals } from '@/components/WeeklyGoals';
 import { ImportantDates } from '@/components/ImportantDates';
 import { AIInsights } from '@/components/AIInsights';
-import { TodoList } from '@/components/TodoList';
 import { TaskAgent } from '@/components/TaskAgent';
 import { ScreenTimeCard, ShutdownMode, RestPermission } from '@/components/screentime';
-import { SmartNudges, LifeDriftDetection, BalanceScore } from '@/components/awareness';
+import { SmartNudges, LifeDriftDetection } from '@/components/awareness';
 // QuickMoodCheckin removed from home screen - available on Self Care page
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -116,10 +115,6 @@ export default function Dashboard() {
           <LifeDriftDetection />
         </section>
 
-        {/* Balance Score */}
-        <section>
-          <BalanceScore />
-        </section>
 
         {/* AI Insights */}
         <section className="space-y-4">
@@ -149,10 +144,9 @@ export default function Dashboard() {
           <TimeCheck />
         </section>
 
-        {/* Quick Capture & To-Do List */}
-        <section className="space-y-4">
+        {/* Quick Capture */}
+        <section>
           <TaskAgent />
-          <TodoList />
         </section>
 
         {/* Weekly Goals */}
