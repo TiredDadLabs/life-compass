@@ -100,27 +100,7 @@ export default function Dashboard() {
           </p>
         </section>
 
-        {/* Weekly Goals - Your Week at top */}
-        <section>
-          <WeeklyGoals />
-        </section>
-
-        {/* Rest Permission - Evening nudge */}
-        <section>
-          <RestPermission />
-        </section>
-
-        {/* Smart Nudges - Pattern-based awareness */}
-        <section>
-          <SmartNudges />
-        </section>
-
-        {/* Life Drift Detection */}
-        <section>
-          <LifeDriftDetection />
-        </section>
-
-        {/* AI Insights */}
+        {/* AI Insights - Your Week first */}
         <section className="space-y-4">
           <AIInsights 
             people={people.map(p => ({
@@ -141,6 +121,26 @@ export default function Dashboard() {
             }))}
             userCity={profile?.city || undefined}
           />
+        </section>
+
+        {/* Weekly Goals */}
+        <section>
+          <WeeklyGoals />
+        </section>
+
+        {/* Rest Permission - Evening nudge */}
+        <section>
+          <RestPermission />
+        </section>
+
+        {/* Smart Nudges - Pattern-based awareness */}
+        <section>
+          <SmartNudges />
+        </section>
+
+        {/* Life Drift Detection */}
+        <section>
+          <LifeDriftDetection />
         </section>
 
         {/* Time Check - Key Emotional Hook */}
