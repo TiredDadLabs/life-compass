@@ -100,6 +100,11 @@ export default function Dashboard() {
           </p>
         </section>
 
+        {/* Weekly Goals - Your Week at top */}
+        <section>
+          <WeeklyGoals />
+        </section>
+
         {/* Rest Permission - Evening nudge */}
         <section>
           <RestPermission />
@@ -114,7 +119,6 @@ export default function Dashboard() {
         <section>
           <LifeDriftDetection />
         </section>
-
 
         {/* AI Insights */}
         <section className="space-y-4">
@@ -147,11 +151,6 @@ export default function Dashboard() {
         {/* Quick Capture */}
         <section>
           <TaskAgent />
-        </section>
-
-        {/* Weekly Goals */}
-        <section>
-          <WeeklyGoals />
         </section>
 
         {/* Screen Time Awareness */}
