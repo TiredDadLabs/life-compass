@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { HorizonProvider } from "@/contexts/HorizonContext";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { Onboarding } from "@/components/Onboarding";
+import { useHorizonData } from "@/hooks/useHorizonData";
 import Dashboard from "./pages/Dashboard";
 import GoalsPage from "./pages/GoalsPage";
 import TodosPage from "./pages/TodosPage";
@@ -18,22 +19,34 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-horizon-warm via-background to-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+function LoadingSpinner() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-horizon-warm via-background to-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading...</p>
       </div>
-    );
+    </div>
+  );
+}
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
+  const { profile, isLoading: profileLoading } = useHorizonData();
+  const location = useLocation();
+  
+  if (authLoading || (user && profileLoading)) {
+    return <LoadingSpinner />;
   }
   
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to onboarding if profile is incomplete (except if already on onboarding)
+  const needsOnboarding = profile && !profile.onboarding_completed && !profile.name;
+  if (needsOnboarding && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
   }
   
   return <>{children}</>;
@@ -47,14 +60,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     new URLSearchParams(location.search).get('reset') === 'true';
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-horizon-warm via-background to-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   // Allow authenticated recovery sessions to stay on /auth?reset=true
