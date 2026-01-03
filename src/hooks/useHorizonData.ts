@@ -80,7 +80,15 @@ export function useHorizonData() {
     if (error) {
       console.error('Error fetching profile:', error);
     } else {
-      setProfile(data);
+      // Prefer the authenticated email as the source of truth.
+      // (This prevents stale/incorrect profile email from showing in the UI.)
+      const merged = data ? { ...data, email: user.email ?? data.email } : null;
+      setProfile(merged);
+
+      if (data && user.email && data.email !== user.email) {
+        // Best-effort sync; don't block UI on this.
+        void supabase.from('profiles').update({ email: user.email }).eq('id', user.id);
+      }
     }
   }, [user]);
 
