@@ -1,9 +1,11 @@
-import { useHorizon } from '@/contexts/HorizonContext';
-import { Goal, GoalCategory } from '@/types/horizon';
+import { useHorizonData, DbGoal } from '@/hooks/useHorizonData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heart, Users, Dumbbell, Briefcase, Sparkles, Plus, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+
+type GoalCategory = 'relationship' | 'kids' | 'health' | 'work' | 'self';
 
 const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; color: string }> = {
   relationship: { icon: Heart, label: 'Relationship', color: 'text-primary' },
@@ -14,18 +16,20 @@ const categoryConfig: Record<GoalCategory, { icon: typeof Heart; label: string; 
 };
 
 interface GoalCardProps {
-  goal: Goal;
+  goal: DbGoal;
   index: number;
+  onLogProgress: (goalId: string) => void;
+  getCurrentRampedTarget: (goal: DbGoal) => number;
 }
 
-function GoalCard({ goal, index }: GoalCardProps) {
-  const { updateGoalProgress, getCurrentRampedTarget } = useHorizon();
-  const config = categoryConfig[goal.category];
+function GoalCard({ goal, index, onLogProgress, getCurrentRampedTarget }: GoalCardProps) {
+  const category = goal.category as GoalCategory;
+  const config = categoryConfig[category] || categoryConfig.self;
   const Icon = config.icon;
   
   const target = getCurrentRampedTarget(goal);
-  const progress = Math.min((goal.currentAmount / target) * 100, 100);
-  const isComplete = goal.currentAmount >= target;
+  const progress = Math.min((goal.current_progress / target) * 100, 100);
+  const isComplete = goal.current_progress >= target;
 
   return (
     <Card
@@ -49,7 +53,7 @@ function GoalCard({ goal, index }: GoalCardProps) {
           </div>
         </div>
         
-        {goal.rampingEnabled && (
+        {goal.ramp_enabled && (
           <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-highlight/10 text-highlight-foreground">
             <TrendingUp className="w-3 h-3" />
             Ramping
@@ -60,7 +64,7 @@ function GoalCard({ goal, index }: GoalCardProps) {
       <div className="space-y-3">
         <div className="flex items-baseline justify-between">
           <span className="text-2xl font-display font-semibold text-foreground">
-            {goal.currentAmount}
+            {goal.current_progress}
             <span className="text-base text-muted-foreground font-sans"> / {target}</span>
           </span>
           <span className="text-sm text-muted-foreground">
@@ -78,9 +82,9 @@ function GoalCard({ goal, index }: GoalCardProps) {
           />
         </div>
 
-        {goal.rampingEnabled && goal.currentWeek && goal.rampWeeks && (
+        {goal.ramp_enabled && goal.ramp_current_week && goal.ramp_duration_weeks && (
           <p className="text-xs text-muted-foreground">
-            Week {goal.currentWeek} of {goal.rampWeeks} • Building up gradually
+            Week {goal.ramp_current_week} of {goal.ramp_duration_weeks} • Building up gradually
           </p>
         )}
 
@@ -88,7 +92,7 @@ function GoalCard({ goal, index }: GoalCardProps) {
           variant={isComplete ? "success" : "secondary"}
           size="sm"
           className="w-full"
-          onClick={() => updateGoalProgress(goal.id, 1)}
+          onClick={() => onLogProgress(goal.id)}
         >
           <Plus className="w-4 h-4" />
           {isComplete ? "Done for the week!" : `Log ${goal.unit === 'sessions' ? 'session' : 'hour'}`}
@@ -99,7 +103,34 @@ function GoalCard({ goal, index }: GoalCardProps) {
 }
 
 export function WeeklyGoals() {
-  const { goals } = useHorizon();
+  const { goals, logGoalActivity, getCurrentRampedTarget, isLoading } = useHorizonData();
+
+  const handleLogProgress = async (goalId: string) => {
+    try {
+      await logGoalActivity(goalId);
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-foreground">
+            This Week&apos;s Goals
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="p-5 animate-pulse">
+              <div className="h-24 bg-secondary rounded" />
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -107,17 +138,37 @@ export function WeeklyGoals() {
         <h2 className="font-display text-lg font-semibold text-foreground">
           This Week&apos;s Goals
         </h2>
-        <Button variant="ghost" size="sm">
-          <Plus className="w-4 h-4" />
-          Add Goal
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/goals">
+            <Plus className="w-4 h-4" />
+            Add Goal
+          </Link>
         </Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {goals.map((goal, index) => (
-          <GoalCard key={goal.id} goal={goal} index={index} />
-        ))}
-      </div>
+      {goals.length === 0 ? (
+        <Card className="p-8 text-center">
+          <p className="text-muted-foreground mb-4">No goals yet. Start by adding your first goal!</p>
+          <Button asChild>
+            <Link to="/goals">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Goal
+            </Link>
+          </Button>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {goals.map((goal, index) => (
+            <GoalCard 
+              key={goal.id} 
+              goal={goal} 
+              index={index}
+              onLogProgress={handleLogProgress}
+              getCurrentRampedTarget={getCurrentRampedTarget}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

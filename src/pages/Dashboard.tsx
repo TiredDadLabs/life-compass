@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getTimeOfDay } from '@/lib/utils';
 
 export default function Dashboard() {
   const { user: authUser } = useAuth();
@@ -212,11 +213,4 @@ export default function Dashboard() {
       </Dialog>
     </div>
   );
-}
-
-function getTimeOfDay(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 17) return 'afternoon';
-  return 'evening';
 }
