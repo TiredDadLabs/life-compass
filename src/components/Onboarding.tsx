@@ -6,6 +6,9 @@ import { Label } from '@/components/ui/label';
 import { GoalCategory } from '@/types/horizon';
 import { Heart, Users, Dumbbell, Briefcase, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -83,9 +86,11 @@ const emotionalScreens = [
 ];
 
 export function Onboarding({ onComplete }: OnboardingProps) {
+  const { user } = useAuth();
   const [phase, setPhase] = useState<'emotional' | 'setup'>('emotional');
   const [emotionalStep, setEmotionalStep] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -101,6 +106,38 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         ? prev.priorities.filter((p) => p !== id)
         : [...prev.priorities, id],
     }));
+  };
+
+  const handleComplete = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      // Parse work hours from time strings
+      const workStartHour = parseInt(formData.workStart.split(':')[0], 10);
+      const workEndHour = parseInt(formData.workEnd.split(':')[0], 10);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.name,
+          city: formData.city || null,
+          work_start_hour: workStartHour,
+          work_end_hour: workEndHour,
+          priority_areas: formData.priorities,
+          onboarding_completed: true,
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      onComplete();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save your profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const setupSteps = [
@@ -424,8 +461,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             )}
 
             {setupStep === setupSteps.length - 1 ? (
-              <Button variant="horizon" size="lg" onClick={onComplete}>
-                Get Started
+              <Button variant="horizon" size="lg" onClick={handleComplete} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Get Started'}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             ) : (

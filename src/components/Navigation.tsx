@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Target, Users, Heart, CheckSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useHorizonData } from '@/hooks/useHorizonData';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Home' },
@@ -51,6 +52,12 @@ export function BottomNav() {
 }
 
 export function Header() {
+  const { profile } = useHorizonData();
+  
+  // Get first letter of name or email for avatar
+  const displayName = profile?.name || profile?.email || '';
+  const initial = displayName.charAt(0).toUpperCase() || 'U';
+
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border">
       <div className="max-w-4xl mx-auto px-4 py-4">
@@ -63,9 +70,12 @@ export function Header() {
               Your weekly command center
             </p>
           </div>
-          <div className="w-10 h-10 rounded-full gradient-horizon flex items-center justify-center text-primary-foreground font-semibold">
-            A
-          </div>
+          <Link 
+            to="/settings"
+            className="w-10 h-10 rounded-full gradient-horizon flex items-center justify-center text-primary-foreground font-semibold hover:opacity-90 transition-smooth"
+          >
+            {initial}
+          </Link>
         </div>
       </div>
     </header>
